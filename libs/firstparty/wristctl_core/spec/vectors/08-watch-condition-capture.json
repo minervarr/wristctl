@@ -1,0 +1,18 @@
+{
+  "id": "watch-condition-capture",
+  "class": "watch_condition",
+  "source": "observed: work/evidence/att_frames_current.txt:20",
+  "bytes": "28061e2300ba010001",
+  "decoded": {
+    "battery": 6,
+    "temperature": 30,
+    "flash_status": 35,
+    "reserved_4": 0,
+    "mtu": 442,
+    "log_status": 0,
+    "flags": 1,
+    "modified_bt": true,
+    "modified_ht_city_dst": false,
+    "status_not_permitted": false
+  }
+}

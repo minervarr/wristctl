@@ -1,0 +1,16 @@
+{
+  "id": "time-sync-target",
+  "class": "current_time",
+  "source": "observed: work/MANIFEST.md NTP sync target 2026-10-27T18:02:01-05:00",
+  "bytes": "09ea070a1b120201020001",
+  "decoded": {
+    "year": 2026,
+    "month": 10,
+    "day": 27,
+    "hour": 18,
+    "minute": 2,
+    "second": 1,
+    "weekday": 2,
+    "nano": 0
+  }
+}

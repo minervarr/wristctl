@@ -1,0 +1,42 @@
+{
+  "id": "alarm-rest-all-off",
+  "class": "alarm_rest",
+  "source": "derived: four disabled entries",
+  "bytes": "1600400000004000000040000000400000",
+  "decoded": {
+    "alarms": [
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "hour": 0,
+        "minute": 0
+      },
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "hour": 0,
+        "minute": 0
+      },
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "hour": 0,
+        "minute": 0
+      },
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "hour": 0,
+        "minute": 0
+      }
+    ]
+  }
+}

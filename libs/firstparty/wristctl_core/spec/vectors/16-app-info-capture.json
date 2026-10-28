@@ -1,0 +1,10 @@
+{
+  "id": "app-info-capture",
+  "class": "app_info",
+  "source": "observed: work/evidence/att_frames_current.txt:7 (random per-install ID, OS 2 = Android)",
+  "bytes": "22d5d6d017797e2ca55f1802",
+  "decoded": {
+    "app_id": "d5d6d017797e2ca55f18",
+    "os": 2
+  }
+}

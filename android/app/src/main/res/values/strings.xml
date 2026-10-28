@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">wristctl</string>
+    <string name="idle">Idle</string>
+    <string name="model_unknown">Model: unknown</string>
+    <string name="connect">Connect</string>
+    <string name="sync_time">Sync time</string>
+    <string name="disconnect">Disconnect</string>
+</resources>

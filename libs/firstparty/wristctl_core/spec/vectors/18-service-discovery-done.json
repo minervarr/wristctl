@@ -1,0 +1,9 @@
+{
+  "id": "service-discovery-done",
+  "class": "service_discovery",
+  "source": "observed: work/evidence/att_frames_current.txt:67",
+  "bytes": "4701",
+  "decoded": {
+    "command": 1
+  }
+}

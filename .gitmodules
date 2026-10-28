@@ -1,0 +1,12 @@
+[submodule "libs/firstparty/framework/App_shell"]
+	path = libs/firstparty/framework/App_shell
+	url = https://github.com/minervarr/App_shell.git
+[submodule "libs/firstparty/framework/Vk_Canvas_Lb_LAW"]
+	path = libs/firstparty/framework/Vk_Canvas_Lb_LAW
+	url = https://github.com/minervarr/Vk_Canvas_Lb_LAW.git
+[submodule "assets/fonts"]
+	path = assets/fonts
+	url = https://github.com/minervarr/fonts.git
+[submodule "libs/firstparty/archive_engine"]
+	path = libs/firstparty/archive_engine
+	url = https://github.com/minervarr/archive_engine.git

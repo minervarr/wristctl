@@ -1,0 +1,13 @@
+{
+  "id": "dst-setting-wt",
+  "class": "dst_setting",
+  "source": "observed: work/evidence/att_frames_current.txt:45 (world-time unit cleared)",
+  "bytes": "1e010000000000",
+  "decoded": {
+    "unit": 1,
+    "city": 0,
+    "timezone": 0,
+    "dst_diff": 0,
+    "dst_rule": 0
+  }
+}

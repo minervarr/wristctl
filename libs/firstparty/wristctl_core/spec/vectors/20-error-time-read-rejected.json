@@ -1,0 +1,10 @@
+{
+  "id": "error-time-read-rejected",
+  "class": "error",
+  "source": "observed: work/MANIFEST.md (0x09 read returns ff8109 on the GBX-100)",
+  "bytes": "ff8109",
+  "decoded": {
+    "status": 129,
+    "class_id": 9
+  }
+}

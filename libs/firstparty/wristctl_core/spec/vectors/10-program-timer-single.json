@@ -1,0 +1,41 @@
+{
+  "id": "program-timer-single",
+  "class": "program_timer",
+  "source": "derived: single 05:00 entry with repeat=0, the shape gshockctl timer-set writes",
+  "bytes": "2a00050000000000000000000000000000000000",
+  "decoded": {
+    "repeat": 0,
+    "workouts": [
+      {
+        "minutes": 5,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      }
+    ]
+  }
+}

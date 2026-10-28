@@ -1,0 +1,659 @@
+{
+  "version": 1,
+  "note": "Wire layouts for the Casio 0x26EB000D watch-features service. Offsets include the class byte at index 0. Generated codecs are produced from this file by gen/gen_py.py and gen/gen_c.py; edit the spec, never the generated output.",
+  "classes": [
+    {
+      "id": 9,
+      "name": "current_time",
+      "title": "Current time",
+      "direction": "write",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:63 and work/evidence/watch_session_btmon.txt",
+      "length": {
+        "min": 11,
+        "max": 11
+      },
+      "fields": [
+        {
+          "name": "year",
+          "type": "u16le",
+          "offset": 1
+        },
+        {
+          "name": "month",
+          "type": "u8",
+          "offset": 3,
+          "range": [
+            1,
+            12
+          ]
+        },
+        {
+          "name": "day",
+          "type": "u8",
+          "offset": 4,
+          "range": [
+            1,
+            31
+          ]
+        },
+        {
+          "name": "hour",
+          "type": "u8",
+          "offset": 5,
+          "range": [
+            0,
+            23
+          ]
+        },
+        {
+          "name": "minute",
+          "type": "u8",
+          "offset": 6,
+          "range": [
+            0,
+            59
+          ]
+        },
+        {
+          "name": "second",
+          "type": "u8",
+          "offset": 7,
+          "range": [
+            0,
+            59
+          ]
+        },
+        {
+          "name": "weekday",
+          "type": "u8",
+          "offset": 8,
+          "range": [
+            0,
+            6
+          ]
+        },
+        {
+          "name": "nano",
+          "type": "u8",
+          "offset": 9
+        },
+        {
+          "name": "flag",
+          "type": "u8",
+          "offset": 10,
+          "expected": 1
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "basic_setting",
+      "title": "Basic settings",
+      "direction": "readwrite",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:69; bit meanings from RemoteCasioWatchFeaturesService WFS_BASIC_*",
+      "length": {
+        "min": 12,
+        "max": 12
+      },
+      "fields": [
+        {
+          "name": "flags",
+          "type": "u8",
+          "offset": 1
+        },
+        {
+          "name": "time_format_24h",
+          "type": "bit",
+          "container": "flags",
+          "mask": 1
+        },
+        {
+          "name": "button_tone_off",
+          "type": "bit",
+          "container": "flags",
+          "mask": 2
+        },
+        {
+          "name": "auto_light_off",
+          "type": "bit",
+          "container": "flags",
+          "mask": 4
+        },
+        {
+          "name": "power_saving_off",
+          "type": "bit",
+          "container": "flags",
+          "mask": 16
+        },
+        {
+          "name": "light_duration",
+          "type": "u8",
+          "offset": 2
+        },
+        {
+          "name": "reserved_3",
+          "type": "u8",
+          "offset": 3
+        },
+        {
+          "name": "date_format_ddmm",
+          "type": "u8",
+          "offset": 4
+        },
+        {
+          "name": "language",
+          "type": "u8",
+          "offset": 5,
+          "range": [
+            0,
+            5
+          ]
+        },
+        {
+          "name": "reserved_tail",
+          "type": "bytes",
+          "offset": 6,
+          "length": 6
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "name": "alarm_first",
+      "title": "Alarm 0",
+      "direction": "readwrite",
+      "confidence": "derived",
+      "source": "RemoteCasioWatchFeaturesService.getAlmToAlarmInfo + gshock_api model/alarms.py; polarity of the hourly-chime bit is unverified",
+      "length": {
+        "min": 5,
+        "max": 5
+      },
+      "fields": [
+        {
+          "name": "flag",
+          "type": "u8",
+          "offset": 1
+        },
+        {
+          "name": "enabled",
+          "type": "bit",
+          "container": "flag",
+          "mask": 64
+        },
+        {
+          "name": "one_time",
+          "type": "bit",
+          "container": "flag",
+          "mask": 32
+        },
+        {
+          "name": "hourly_chime",
+          "type": "bit",
+          "container": "flag",
+          "mask": 128
+        },
+        {
+          "name": "constant",
+          "type": "u8",
+          "offset": 2,
+          "expected": 64
+        },
+        {
+          "name": "hour",
+          "type": "u8",
+          "offset": 3,
+          "range": [
+            0,
+            23
+          ]
+        },
+        {
+          "name": "minute",
+          "type": "u8",
+          "offset": 4,
+          "range": [
+            0,
+            59
+          ]
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "name": "alarm_rest",
+      "title": "Alarms 1-4",
+      "direction": "readwrite",
+      "confidence": "derived",
+      "source": "RemoteCasioWatchFeaturesService.getAlmToAlarmInfo + gshock_api model/alarms.py",
+      "length": {
+        "min": 17,
+        "max": 17
+      },
+      "fields": [
+        {
+          "name": "alarms",
+          "type": "array",
+          "offset": 1,
+          "count": 4,
+          "stride": 4,
+          "fields": [
+            {
+              "name": "flag",
+              "type": "u8",
+              "offset": 0
+            },
+            {
+              "name": "enabled",
+              "type": "bit",
+              "container": "flag",
+              "mask": 64
+            },
+            {
+              "name": "one_time",
+              "type": "bit",
+              "container": "flag",
+              "mask": 32
+            },
+            {
+              "name": "hourly_chime",
+              "type": "bit",
+              "container": "flag",
+              "mask": 128
+            },
+            {
+              "name": "constant",
+              "type": "u8",
+              "offset": 1,
+              "expected": 64
+            },
+            {
+              "name": "hour",
+              "type": "u8",
+              "offset": 2,
+              "range": [
+                0,
+                23
+              ]
+            },
+            {
+              "name": "minute",
+              "type": "u8",
+              "offset": 3,
+              "range": [
+                0,
+                59
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "name": "watch_name",
+      "title": "Watch name",
+      "direction": "readwrite",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:3; write length is model-dependent (CasioLibUtil.getLimitedWatchNameLength)",
+      "length": {
+        "min": 20,
+        "max": 20
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "offset": 1,
+          "length": 19
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "name": "watch_condition",
+      "title": "Watch condition",
+      "direction": "read",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:20; offsets from RemoteCasioWatchFeaturesService.getWatchCondition*",
+      "length": {
+        "min": 9,
+        "max": 9
+      },
+      "fields": [
+        {
+          "name": "battery",
+          "type": "u8",
+          "offset": 1
+        },
+        {
+          "name": "temperature",
+          "type": "u8",
+          "offset": 2
+        },
+        {
+          "name": "flash_status",
+          "type": "u8",
+          "offset": 3
+        },
+        {
+          "name": "reserved_4",
+          "type": "u8",
+          "offset": 4
+        },
+        {
+          "name": "mtu",
+          "type": "u16le",
+          "offset": 5
+        },
+        {
+          "name": "log_status",
+          "type": "u8",
+          "offset": 7
+        },
+        {
+          "name": "flags",
+          "type": "u8",
+          "offset": 8
+        },
+        {
+          "name": "modified_bt",
+          "type": "bit",
+          "container": "flags",
+          "mask": 1
+        },
+        {
+          "name": "modified_ht_city_dst",
+          "type": "bit",
+          "container": "flags",
+          "mask": 2
+        },
+        {
+          "name": "status_not_permitted",
+          "type": "bit",
+          "container": "flags",
+          "mask": 4
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "name": "program_timer",
+      "title": "Program timer",
+      "direction": "readwrite",
+      "confidence": "observed",
+      "source": "work/MANIFEST.md program-timer probe; work/protocol/ble-protocol.md",
+      "length": {
+        "min": 20,
+        "max": 20
+      },
+      "fields": [
+        {
+          "name": "repeat",
+          "type": "u8",
+          "offset": 1,
+          "range": [
+            0,
+            99
+          ]
+        },
+        {
+          "name": "workouts",
+          "type": "array",
+          "offset": 2,
+          "count": 6,
+          "stride": 3,
+          "fields": [
+            {
+              "name": "minutes",
+              "type": "bcd8",
+              "offset": 0
+            },
+            {
+              "name": "seconds",
+              "type": "bcd8",
+              "offset": 1
+            },
+            {
+              "name": "beep",
+              "type": "u8",
+              "offset": 2,
+              "range": [
+                0,
+                3
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "name": "dst_watch_state",
+      "title": "DST watch state",
+      "direction": "readwrite",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:38; offsets from DstWatchStateValuesCreator.getDstWatchState*",
+      "length": {
+        "min": 15,
+        "max": 15
+      },
+      "fields": [
+        {
+          "name": "watch_no_home",
+          "type": "u8",
+          "offset": 1
+        },
+        {
+          "name": "watch_no_world",
+          "type": "u8",
+          "offset": 2
+        },
+        {
+          "name": "state_home",
+          "type": "u8",
+          "offset": 3
+        },
+        {
+          "name": "dst_on_home",
+          "type": "bit",
+          "container": "state_home",
+          "mask": 1
+        },
+        {
+          "name": "dst_auto_home",
+          "type": "bit",
+          "container": "state_home",
+          "mask": 2
+        },
+        {
+          "name": "dst_auto_rep_home",
+          "type": "bit",
+          "container": "state_home",
+          "mask": 4
+        },
+        {
+          "name": "state_world",
+          "type": "u8",
+          "offset": 4
+        },
+        {
+          "name": "dst_on_world",
+          "type": "bit",
+          "container": "state_world",
+          "mask": 1
+        },
+        {
+          "name": "dst_auto_world",
+          "type": "bit",
+          "container": "state_world",
+          "mask": 2
+        },
+        {
+          "name": "dst_auto_rep_world",
+          "type": "bit",
+          "container": "state_world",
+          "mask": 4
+        },
+        {
+          "name": "city_home",
+          "type": "u16le",
+          "offset": 5
+        },
+        {
+          "name": "city_world",
+          "type": "u16le",
+          "offset": 7
+        },
+        {
+          "name": "city_extra_1",
+          "type": "u16le",
+          "offset": 9
+        },
+        {
+          "name": "city_extra_2",
+          "type": "u16le",
+          "offset": 11
+        },
+        {
+          "name": "city_extra_3",
+          "type": "u16le",
+          "offset": 13
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "dst_setting",
+      "title": "DST setting per unit",
+      "direction": "readwrite",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:44; layout from DstWatchStateValuesCreator.createDstSettingValue",
+      "length": {
+        "min": 7,
+        "max": 7
+      },
+      "fields": [
+        {
+          "name": "unit",
+          "type": "u8",
+          "offset": 1
+        },
+        {
+          "name": "city",
+          "type": "u16le",
+          "offset": 2
+        },
+        {
+          "name": "timezone",
+          "type": "i8",
+          "offset": 4
+        },
+        {
+          "name": "dst_diff",
+          "type": "u8",
+          "offset": 5
+        },
+        {
+          "name": "dst_rule",
+          "type": "u8",
+          "offset": 6
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "name": "city_name",
+      "title": "City name per unit",
+      "direction": "readwrite",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:49-53",
+      "length": {
+        "min": 20,
+        "max": 20
+      },
+      "fields": [
+        {
+          "name": "unit",
+          "type": "u8",
+          "offset": 1
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "offset": 2,
+          "length": 18
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "name": "app_info",
+      "title": "App information",
+      "direction": "write",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:7; WFS_APP_INFO_APP_ID_LENGTH=10, OS_ANDROID=2",
+      "length": {
+        "min": 12,
+        "max": 12
+      },
+      "fields": [
+        {
+          "name": "app_id",
+          "type": "bytes",
+          "offset": 1,
+          "length": 10
+        },
+        {
+          "name": "os",
+          "type": "u8",
+          "offset": 11
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "name": "service_discovery",
+      "title": "Service discovery manager",
+      "direction": "read",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:64,67; watch-initiated, the app never answers",
+      "length": {
+        "min": 2,
+        "max": 2
+      },
+      "fields": [
+        {
+          "name": "command",
+          "type": "u8",
+          "offset": 1
+        }
+      ]
+    },
+    {
+      "id": 255,
+      "name": "error",
+      "title": "Error frame",
+      "direction": "read",
+      "confidence": "observed",
+      "source": "work/evidence/att_frames_current.txt:75 (ff815a) and the 0x09 read rejection (ff8109)",
+      "length": {
+        "min": 3,
+        "max": 3
+      },
+      "fields": [
+        {
+          "name": "status",
+          "type": "u8",
+          "offset": 1
+        },
+        {
+          "name": "class_id",
+          "type": "u8",
+          "offset": 2
+        }
+      ]
+    }
+  ]
+}

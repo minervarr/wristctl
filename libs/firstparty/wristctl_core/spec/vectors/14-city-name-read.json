@@ -1,0 +1,10 @@
+{
+  "id": "city-name-read",
+  "class": "city_name",
+  "source": "observed: work/evidence/att_frames_current.txt:49",
+  "bytes": "1f00544f4b594f00000000000000000000000000",
+  "decoded": {
+    "unit": 0,
+    "name": "TOKYO"
+  }
+}

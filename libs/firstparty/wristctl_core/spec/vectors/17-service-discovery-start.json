@@ -1,0 +1,9 @@
+{
+  "id": "service-discovery-start",
+  "class": "service_discovery",
+  "source": "observed: work/evidence/att_frames_current.txt:64 (the watch asks the app to start discovery)",
+  "bytes": "4702",
+  "decoded": {
+    "command": 2
+  }
+}

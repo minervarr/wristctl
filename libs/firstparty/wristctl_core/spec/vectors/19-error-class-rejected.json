@@ -1,0 +1,10 @@
+{
+  "id": "error-class-rejected",
+  "class": "error",
+  "source": "observed: work/evidence/att_frames_current.txt:75 (0x5A rejected as unsupported)",
+  "bytes": "ff815a",
+  "decoded": {
+    "status": 129,
+    "class_id": 90
+  }
+}

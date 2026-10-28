@@ -1,0 +1,41 @@
+{
+  "id": "program-timer-original",
+  "class": "program_timer",
+  "source": "observed: work/MANIFEST.md restored watch state, repeat=1, 00:25 and 00:05",
+  "bytes": "2a01002500000500000000000000000000000000",
+  "decoded": {
+    "repeat": 1,
+    "workouts": [
+      {
+        "minutes": 0,
+        "seconds": 25,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 5,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      },
+      {
+        "minutes": 0,
+        "seconds": 0,
+        "beep": 0
+      }
+    ]
+  }
+}

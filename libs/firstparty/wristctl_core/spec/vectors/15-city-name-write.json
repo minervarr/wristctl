@@ -1,0 +1,10 @@
+{
+  "id": "city-name-write",
+  "class": "city_name",
+  "source": "observed: work/evidence/att_frames_current.txt:52 (the app writes a GMT offset name)",
+  "bytes": "1f00474d542b3500000000000000000000000000",
+  "decoded": {
+    "unit": 0,
+    "name": "GMT+5"
+  }
+}

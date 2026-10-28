@@ -1,0 +1,9 @@
+{
+  "id": "watch-name-capture",
+  "class": "watch_name",
+  "source": "observed: work/evidence/att_frames_current.txt:3",
+  "bytes": "23434153494f204742582d313030000000000000",
+  "decoded": {
+    "name": "CASIO GBX-100"
+  }
+}

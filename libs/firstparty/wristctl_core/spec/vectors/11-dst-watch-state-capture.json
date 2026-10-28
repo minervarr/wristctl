@@ -1,0 +1,23 @@
+{
+  "id": "dst-watch-state-capture",
+  "class": "dst_watch_state",
+  "source": "observed: work/evidence/att_frames_current.txt:38",
+  "bytes": "1d00010202b5760000ffffffffffff",
+  "decoded": {
+    "watch_no_home": 0,
+    "watch_no_world": 1,
+    "state_home": 2,
+    "dst_on_home": false,
+    "dst_auto_home": true,
+    "dst_auto_rep_home": false,
+    "state_world": 2,
+    "dst_on_world": false,
+    "dst_auto_world": true,
+    "dst_auto_rep_world": false,
+    "city_home": 30389,
+    "city_world": 0,
+    "city_extra_1": 65535,
+    "city_extra_2": 65535,
+    "city_extra_3": 65535
+  }
+}

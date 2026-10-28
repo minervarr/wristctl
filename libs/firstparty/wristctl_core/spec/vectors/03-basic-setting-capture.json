@@ -1,0 +1,18 @@
+{
+  "id": "basic-setting-capture",
+  "class": "basic_setting",
+  "source": "observed: work/evidence/att_frames_current.txt:69",
+  "bytes": "134400000000000000000002",
+  "decoded": {
+    "flags": 68,
+    "time_format_24h": false,
+    "button_tone_off": false,
+    "auto_light_off": true,
+    "power_saving_off": false,
+    "light_duration": 0,
+    "reserved_3": 0,
+    "date_format_ddmm": 0,
+    "language": 0,
+    "reserved_tail": "000000000002"
+  }
+}

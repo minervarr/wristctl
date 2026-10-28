@@ -1,0 +1,14 @@
+{
+  "id": "alarm-first-enabled",
+  "class": "alarm_first",
+  "source": "derived: layout from RemoteCasioWatchFeaturesService + gshock_api; 07:30 enabled",
+  "bytes": "154040071e",
+  "decoded": {
+    "flag": 64,
+    "enabled": true,
+    "one_time": false,
+    "hourly_chime": false,
+    "hour": 7,
+    "minute": 30
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "dst-setting-ht",
+  "class": "dst_setting",
+  "source": "observed: work/evidence/att_frames_current.txt:44 (home city, UTC-5, DST +60)",
+  "bytes": "1e00b576ec0400",
+  "decoded": {
+    "unit": 0,
+    "city": 30389,
+    "timezone": -20,
+    "dst_diff": 4,
+    "dst_rule": 0
+  }
+}

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wristctl-proto"
+version = "0.0.1"
+description = "Protocol prototype for the wristctl Casio watch controller"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+ble = ["bleak>=0.22"]
+# PyGObject is normally a distribution package (python-gobject on Arch);
+# pip-building it needs the GTK development headers.
+gui = ["PyGObject>=3.42"]
+
+[project.scripts]
+wristctl-ui = "wristctl_proto.ui.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wristctl_proto*"]
