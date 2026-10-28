@@ -14,6 +14,7 @@ libs/firstparty/wristctl_core/   portable C11 protocol library (the product)
   gen/                           extractors and generators (dev tooling)
 libs/firstparty/framework/       App_shell + Vk_Canvas submodules (GUI only)
 libs/firstparty/archive_engine/  arc_fs/arc_util submodule (GUI paths only)
+assets/fonts/                    minervarr/fonts submodule (ui/ui.otf)
 platform/linux/                  BlueZ transport (C11 + sd-bus)
 gui/                             App_shell/Vk_Canvas frontend (C++17)
 py/                              Python reference implementation + GTK prototype
