@@ -52,6 +52,8 @@ int main()
     assert(!scanning.connected);
     assert(scanning.scanning);
     assert(scanning.busy);
+    assert(scanning.devices.size() == base.devices.size());
+    assert(scanning.devices.front().address == base.devices.front().address);
 
     const SessionSnapshot permission =
         make_demo_snapshot(base, DemoScenario::Permission);

@@ -26,40 +26,6 @@ namespace {
 
 constexpr int kPollTimer = 1;
 
-bool looks_like_watch_name(const std::string &name)
-{
-    static const char *const prefixes[] = {
-        "CASIO", "GBX", "GBD", "GPR", "GWF", "GST", "GMW", "MRG", "DW-", "GM-"
-    };
-    std::string upper;
-    upper.reserve(name.size());
-    for (char c : name) {
-        upper.push_back(static_cast<char>(std::toupper(
-            static_cast<unsigned char>(c))));
-    }
-    for (const char *prefix : prefixes) {
-        if (upper.rfind(prefix, 0) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-std::string frame_text(const wc_frame &frame)
-{
-    if (frame.len == 0) {
-        return "not read";
-    }
-    char bytes[WC_FRAME_MAX * 3 + 1]{};
-    size_t used = 0;
-    for (uint8_t index = 0; index < frame.len && index < WC_FRAME_MAX; index++) {
-        used += static_cast<size_t>(std::snprintf(
-            bytes + used, sizeof bytes - used, "%s%02x", index == 0 ? "" : " ",
-            frame.data[index]));
-    }
-    return bytes;
-}
-
 std::string offset_text(int quarters, bool utc)
 {
     const int minutes = quarters * 15;
@@ -765,220 +731,6 @@ void WatchView::drawTabs(Canvas &canvas, const Layout &layout)
     }
 }
 
-float WatchView::drawWatchPage(Canvas &canvas, const Layout &layout)
-{
-    if (!snapshot_.connected && snapshot_.supports_scan && !snapshot_.demo) {
-        return drawPairPage(canvas, layout);
-    }
-
-    const float scroll = page_scroll(route_index(route_));
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    float cursor = top;
-
-    auto row = [&](const char *label, const std::string &value,
-                   Color color = col::text) {
-        canvas.text(label, x, cursor - scroll, layout.small_size, col::dim);
-        const std::string shown = truncateToWidth(
-            canvas, value, layout.content_w - layout.label_w, layout.text_size);
-        canvas.text(shown, x + layout.label_w, cursor - scroll,
-                    layout.text_size, color);
-        cursor += layout.row_line;
-    };
-
-    row("name", snapshot_.name.empty() ? "-" : snapshot_.name);
-    row("model", snapshot_.model.empty() ? "-" : snapshot_.model);
-    row("address", snapshot_.address.empty() ? "-" : snapshot_.address);
-    row("pairing", snapshot_.pairing.empty() ? "-" : snapshot_.pairing);
-    row("module frame", frame_text(snapshot_.module_frame));
-    row("version frame", frame_text(snapshot_.version_frame));
-    if (snapshot_.has_condition) {
-        row("battery", std::to_string(snapshot_.battery));
-        row("temperature", std::to_string(snapshot_.temperature) + " C");
-        row("MTU", std::to_string(snapshot_.mtu));
-    } else {
-        row("condition", "not read yet");
-    }
-    if (snapshot_.has_settings) {
-        char flags[32];
-        std::snprintf(flags, sizeof flags, "0x%02x", snapshot_.settings_flags);
-        row("settings", std::string(flags) +
-                            (snapshot_.time_24h ? "  24h" : "  12h"));
-    } else {
-        row("settings", "not read yet");
-    }
-
-    if (snapshot_.demo) {
-        cursor += 8;
-        const float bottom = drawWrapped(
-            canvas,
-            "Demo data from the recorded session; press Connect for a real "
-            "watch.",
-            x, cursor - scroll, layout.content_w, layout.small_size, col::dim,
-            layout.small_size * 1.25f);
-        cursor = bottom + scroll;
-    }
-
-    const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-    cursor += layout.row_line * 0.4f;
-    const float auto_w = std::min(layout.content_w, 250 * d);
-    addButton(canvas, x, cursor - scroll, auto_w, layout.action_h,
-              snapshot_.auto_connect ? "Auto-connect: On"
-                                     : "Auto-connect: Off",
-              Action::ToggleAutoConnect, 0, false,
-              touch_ ? layout.action_h * 0.2f : 7.0f);
-    cursor += layout.action_h + 4 * d;
-    return cursor - top;
-}
-
-float WatchView::drawPairPage(Canvas &canvas, const Layout &layout)
-{
-    const float scroll = page_scroll(route_index(route_));
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    const float w = layout.content_w;
-    const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-    const float gap = 8 * d;
-    const float btn_h = touch_ ? 44 * d : 30.0f;
-    const float row_h = touch_ ? 64 * d : 46.0f;
-    float cursor = top;
-
-    auto line = [&](const std::string &text, Color color, float size) {
-        const float bottom = drawWrapped(canvas, text, x, cursor - scroll, w,
-                                         size, color, size * 1.4f);
-        cursor = bottom + scroll + 4 * d;
-    };
-    auto banner_button = [&](float bx, float by, float bw,
-                             const char *label, Action action) {
-        addButton(canvas, bx, by, bw, btn_h, label, action, 0, false,
-                  btn_h * 0.2f);
-    };
-
-    const bool blocked = snapshot_.permission_missing ||
-                         snapshot_.bluetooth_off || snapshot_.location_off;
-    if (snapshot_.permission_missing) {
-        line("Nearby devices permission is required to find and pair your "
-             "watch.",
-             col::yellow, layout.small_size);
-        const float half = (w - gap) / 2;
-        banner_button(x, cursor - scroll, half, "Grant", Action::Grant);
-        banner_button(x + half + gap, cursor - scroll, half, "Open settings",
-                      Action::OpenSettings);
-        cursor += btn_h + gap;
-    }
-    if (snapshot_.bluetooth_off) {
-        line("Bluetooth is off.", col::yellow, layout.small_size);
-        banner_button(x, cursor - scroll, std::min(w, 200 * d), "Turn on",
-                      Action::TurnOnBluetooth);
-        cursor += btn_h + gap;
-    }
-    if (snapshot_.location_off) {
-        line("Location services are off; Android 11 and older need them for BLE "
-             "scanning.",
-             col::yellow, layout.small_size);
-        banner_button(x, cursor - scroll, std::min(w, 230 * d),
-                      "Location settings", Action::OpenLocation);
-        cursor += btn_h + gap;
-    }
-    if (!snapshot_.error.empty() && !blocked) {
-        line(snapshot_.error, col::red, layout.small_size);
-    }
-
-    const bool looking =
-        snapshot_.scanning ||
-        snapshot_.status.find("scanning for the watch") != std::string::npos ||
-        snapshot_.status.find("watching for the watch") != std::string::npos ||
-        snapshot_.status.find("connecting") != std::string::npos;
-    if (looking) {
-        line(snapshot_.scanning
-                 ? "Scanning... press a button on the watch to wake it."
-                 : "Looking for your watch... press a button on the watch.",
-             col::dim, layout.small_size);
-    } else if (!blocked && snapshot_.devices.empty()) {
-        line(snapshot_.status == "not connected" ||
-                     snapshot_.status == "disconnected"
-                 ? "Tap Scan to find and pair your watch."
-                 : "No watches found. Press a button on the watch, then Scan "
-                   "again.",
-             col::dim, layout.small_size);
-    } else if (!blocked) {
-        line("Select a watch, then Pair & connect.", col::dim,
-             layout.small_size);
-    }
-
-    std::vector<const WatchDevice *> visible;
-    for (const WatchDevice &device : snapshot_.devices) {
-        if (show_all_ || looks_like_watch_name(device.name)) {
-            visible.push_back(&device);
-        }
-    }
-    std::stable_sort(visible.begin(), visible.end(),
-                     [](const WatchDevice *a, const WatchDevice *b) {
-                         if (a->bonded != b->bonded) {
-                             return a->bonded;
-                         }
-                         return a->name < b->name;
-                     });
-
-    if (!visible.empty()) {
-        canvas.text("Nearby watches", x, cursor - scroll,
-                    layout.page_title_size, col::text);
-        cursor += layout.page_title_size * 1.5f;
-    }
-
-    for (const WatchDevice *device : visible) {
-        const Rect row{x, cursor - scroll, w, row_h};
-        const bool selected = device->address == selected_address_;
-        const Color selected_bg{0.18f, 0.32f, 0.60f, 1.0f};
-        const Color detail_color{0.82f, 0.88f, 1.0f, 1.0f};
-        canvas.rect(row.x, row.y, row.w, row.h,
-                    selected ? selected_bg : col::panel2, 8 * d);
-        canvas.text(truncateToWidth(canvas, device->name, w - 100 * d,
-                                    layout.text_size),
-                    x + 12 * d, row.y + 8 * d, layout.text_size, col::text);
-        std::string detail = device->address;
-        if (device->rssi != 0) {
-            detail += "   " + std::to_string(device->rssi) + " dBm";
-        }
-        canvas.text(truncateToWidth(canvas, detail, w - 100 * d,
-                                    layout.small_size),
-                    x + 12 * d, row.y + 32 * d, layout.small_size,
-                    selected ? detail_color : col::dim);
-        const char *badge = device->bonded ? "Paired" : "New";
-        const float badge_w = canvas.textWidth(badge, layout.small_size);
-        canvas.text(badge, row.x + w - 12 * d - badge_w, row.y + 10 * d,
-                    layout.small_size,
-                    selected ? col::text
-                             : (device->bonded ? col::green : col::dim));
-        addHit(row, Action::SelectDevice, device->address);
-        cursor += row_h + gap;
-    }
-
-    if (!snapshot_.devices.empty()) {
-        const float bw = std::min(w, 220 * d);
-        addButton(canvas, x, cursor - scroll, bw, btn_h,
-                  show_all_ ? "Show Casio only" : "Show all devices",
-                  Action::ToggleAll, 0, false, btn_h * 0.2f);
-        cursor += btn_h + gap;
-    }
-
-    if (!snapshot_.devices.empty() && visible.empty()) {
-        line("No Casio watches in the list; tap Show all devices.", col::dim,
-             layout.small_size);
-    }
-
-    const float auto_w = std::min(w, 250 * d);
-    addButton(canvas, x, cursor - scroll, auto_w, btn_h,
-              snapshot_.auto_connect ? "Auto-connect: On"
-                                     : "Auto-connect: Off",
-              Action::ToggleAutoConnect, 0, false, btn_h * 0.2f);
-    cursor += btn_h + gap;
-    line("When on, the app reconnects to a paired watch on launch.", col::dim,
-         layout.small_size);
-
-    return cursor - top;
-}
-
 float WatchView::drawClockPage(Canvas &canvas, const Layout &layout)
 {
     auto display_now = std::chrono::system_clock::now();
@@ -1603,31 +1355,6 @@ float WatchView::drawSettingsPage(Canvas &canvas, const Layout &layout)
     return cursor - top;
 }
 
-float WatchView::drawConsolePage(Canvas &canvas, const Layout &layout)
-{
-    const float scroll = page_scroll(route_index(route_));
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    float cursor = top;
-
-    canvas.text("Console", x, cursor - scroll, layout.page_title_size,
-                col::text);
-    cursor += layout.page_title_size * 1.6f;
-
-    const auto &log = snapshot_.log;
-    const size_t limit = touch_ ? 40 : 16;
-    const size_t start = log.size() > limit ? log.size() - limit : 0;
-    const float line = layout.small_size * 1.45f;
-    for (size_t i = start; i < log.size(); i++) {
-        const std::string shown =
-            truncateToWidth(canvas, log[i], layout.content_w,
-                            layout.small_size);
-        canvas.text(shown, x, cursor - scroll, layout.small_size, col::dim);
-        cursor += line;
-    }
-    return cursor - top;
-}
-
 void WatchView::draw_editor_key(Canvas &canvas, float x, float y, float w,
                                 float h, const std::string &label, int key,
                                 Action action)
@@ -1733,7 +1460,7 @@ void WatchView::drawFooter(Canvas &canvas, const Layout &layout)
     canvas.rect(layout.left, y, layout.width, layout.footer_h, col::panel);
     const std::string hint =
         touch_ ? "drag to scroll    tap a tab"
-               : "1-9,0 pages  C connect/auto  R refresh  T sync  Esc quit";
+               : "1-5 pages  C connect/auto  R refresh  T sync  Esc quit";
     canvas.text(hint, layout.left + layout.margin, y + layout.footer_h * 0.22f,
                 layout.small_size, col::dim);
 }
@@ -1788,6 +1515,7 @@ void WatchView::handleClick(float x, float y)
         if (snapshot_.demo && demo_scenario_ != DemoScenario::Recorded) {
             switch (it->action) {
             case Action::Page:
+            case Action::DemoScenario:
             case Action::SelectDevice:
             case Action::ToggleAll:
             case Action::AlarmToggle:
@@ -1825,6 +1553,21 @@ void WatchView::handleClick(float x, float y)
             }
         }
         switch (it->action) {
+        case Action::DemoScenario:
+            demo_scenario_ = static_cast<DemoScenario>(it->arg);
+            if (demo_scenario_ == DemoScenario::Recorded) {
+                snapshot_ = worker_.snapshot();
+                alarms_dirty_ = false;
+                alarms_confirm_ = false;
+                timer_dirty_ = false;
+                timer_confirm_ = false;
+                clock_dirty_ = false;
+                clock_confirm_ = false;
+                settings_dirty_ = false;
+                name_dirty_ = false;
+                sync_drafts();
+            }
+            break;
         case Action::Connect:
             worker_.connect();
             break;
@@ -2350,7 +2093,7 @@ void WatchView::drawFrame()
         page_height = drawSettingsPage(canvas, layout);
         break;
     case Route::Diagnostics:
-        page_height = drawConsolePage(canvas, layout);
+        page_height = drawDiagnosticsPage(canvas, layout);
         break;
     case Route::Count:
         break;

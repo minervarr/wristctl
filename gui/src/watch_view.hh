@@ -101,6 +101,7 @@ private:
         OpenNotificationAccess,
         NotifyQuietHours,
         StopPhoneFinder,
+        DemoScenario,
         EditorKey,
         EditorBackspace,
         EditorSpace,
@@ -157,7 +158,7 @@ private:
     float drawTimerPage(Canvas &canvas, const Layout &layout);
     float drawNotifyPage(Canvas &canvas, const Layout &layout);
     float drawSettingsPage(Canvas &canvas, const Layout &layout);
-    float drawConsolePage(Canvas &canvas, const Layout &layout);
+    float drawDiagnosticsPage(Canvas &canvas, const Layout &layout);
     void drawFooter(Canvas &canvas, const Layout &layout);
     void drawEditor(Canvas &canvas, const Layout &layout);
     void ensureFont();
