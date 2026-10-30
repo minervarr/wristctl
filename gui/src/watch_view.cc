@@ -16,36 +16,15 @@
 #include "renderer.hh"
 #include "settings.hh"
 #include "sntp_client.hh"
+#include "ui_components.hh"
+#include "ui_layout.hh"
+#include "ui_theme.hh"
 #include "watch_model.hh"
 
 namespace wristctl::gui {
 namespace {
 
 constexpr int kPollTimer = 1;
-constexpr float kText = 18.0f;
-constexpr float kSmall = 14.0f;
-constexpr float kTitle = 28.0f;
-
-const char *const kPageNames[] = {
-    "Home", "Watch", "Clock", "Alarms", "Timer",
-    "Training", "Activity", "Phone", "Settings", "Console"};
-
-Color statusColor(const SessionSnapshot &snapshot)
-{
-    if (!snapshot.error.empty()) {
-        return col::red;
-    }
-    if (snapshot.busy) {
-        return col::yellow;
-    }
-    return snapshot.connected ? col::green : col::dim;
-}
-
-std::string status_line(const SessionSnapshot &snapshot)
-{
-    return snapshot.status +
-           (snapshot.auto_connect ? std::string() : std::string("  [auto off]"));
-}
 
 bool looks_like_watch_name(const std::string &name)
 {
@@ -144,10 +123,7 @@ bool WatchView::create(std::unique_ptr<Host> injected_host)
         ensureFont();
     }
     settings_ = load_settings();
-    page_ = route_index(settings_.route);
-    if (page_ >= 5) {
-        page_ += 2;
-    }
+    route_ = settings_.route;
     for (const std::string &server : settings_.ntp_servers) {
         if (!ntp_server_text_.empty()) {
             ntp_server_text_ += ' ';
@@ -328,17 +304,18 @@ void WatchView::onMouseWheel(int x, int y, int delta)
     // content pixel; one wheel detent is a comfortable step.
     const float amount = touch_ ? static_cast<float>(delta)
                                 : static_cast<float>(delta) / 120.0f * 40.0f;
-    scroll_[page_] -= amount;
+    float &scroll = scroll_[route_index(route_)];
+    scroll -= amount;
     const float max_scroll =
         std::max(0.0f, static_cast<float>(last_page_height_ - last_viewport_h_));
-    scroll_[page_] = std::clamp(scroll_[page_], 0.0f, max_scroll);
+    scroll = std::clamp(scroll, 0.0f, max_scroll);
     dirty_ = true;
 }
 
 void WatchView::shutdown()
 {
     running_ = false;
-    settings_.route = route_from_legacy_page(page_);
+    settings_.route = route_;
     save_settings(settings_);
     worker_.shutdown();
 }
@@ -347,6 +324,20 @@ void WatchView::clamp_scroll(int page, float page_height, float viewport_h)
 {
     const float max_scroll = std::max(0.0f, page_height - viewport_h);
     scroll_[page] = std::clamp(scroll_[page], 0.0f, max_scroll);
+}
+
+void WatchView::open_detail(Detail detail, int index)
+{
+    detail_ = detail;
+    detail_index_ = index;
+    dirty_ = true;
+}
+
+void WatchView::close_detail()
+{
+    detail_ = Detail::None;
+    detail_index_ = 0;
+    dirty_ = true;
 }
 
 void WatchView::sync_drafts()
@@ -422,6 +413,8 @@ void WatchView::open_editor(int field)
 
 void WatchView::close_editor(bool apply)
 {
+    const bool fixture_preview =
+        snapshot_.demo && demo_scenario_ != DemoScenario::Recorded;
     if (apply) {
         if (std::string *value = editor_field()) {
             *value = editor_text_;
@@ -440,9 +433,11 @@ void WatchView::close_editor(bool apply)
                 if (!servers.empty()) {
                     settings_.ntp_servers = servers;
                     save_settings(settings_);
-                    worker_.set_time_config(
-                        {settings_.use_ntp, settings_.sync_on_connect,
-                         settings_.ntp_servers, settings_.ntp_timeout_ms});
+                    if (!fixture_preview) {
+                        worker_.set_time_config(
+                            {settings_.use_ntp, settings_.sync_on_connect,
+                             settings_.ntp_servers, settings_.ntp_timeout_ms});
+                    }
                 }
             } else if (editor_field_ == EDIT_NOTIFY_PACKAGES) {
                 std::replace(notify_packages_text_.begin(),
@@ -454,10 +449,12 @@ void WatchView::close_editor(bool apply)
                     settings_.notify_packages.push_back(package);
                 }
                 save_settings(settings_);
-                worker_.set_phone_config(
-                    {settings_.notify_forward, settings_.notify_packages,
-                     settings_.notify_quiet_start_min,
-                     settings_.notify_quiet_end_min});
+                if (!fixture_preview) {
+                    worker_.set_phone_config(
+                        {settings_.notify_forward, settings_.notify_packages,
+                         settings_.notify_quiet_start_min,
+                         settings_.notify_quiet_end_min});
+                }
             }
         }
     }
@@ -607,77 +604,31 @@ float WatchView::drawWrapped(Canvas &canvas, const std::string &text, float x,
 
 WatchView::Layout WatchView::make_layout(const Canvas &canvas) const
 {
+    const UiMetrics metrics = make_ui_metrics(
+        canvas.w(), canvas.h(), touch_, display_density_);
     Layout l;
     l.left = canvas.left();
     l.top = canvas.top();
     l.width = canvas.w();
     l.height = canvas.h();
-
-    if (!touch_) {
-        l.margin = 20;
-        l.header_h = 62;
-        l.title_size = kTitle;
-        l.small_size = kSmall;
-        l.text_size = kText;
-        l.page_title_size = 26;
-        l.clock_size = 86;
-        l.date_size = 22;
-        l.title_y = 12;
-        l.status_y = 20;
-        l.detail_y = 40;
-        l.stacked_header = false;
-        l.tabs_y = 74;
-        l.tab_h = 34;
-        l.tab_gap = 6;
-        l.tab_cols = 5;
-        l.tab_rows = (kPageCount + l.tab_cols - 1) / l.tab_cols;
-        l.tab_w = (l.width - 2 * l.margin - l.tab_gap * 4) / 5;
-        l.actions_y = l.tabs_y + l.tab_rows * (l.tab_h + l.tab_gap) + 8;
-        l.action_h = 32;
-        l.content_x = 30;
-        l.content_y = l.actions_y + l.action_h + 12;
-        l.content_w = l.width - 60;
-        l.footer_h = 34;
-        l.row_line = 28;
-        l.label_w = 150;
-        l.scroll_step = 40;
-    } else {
-        const float d = std::max(1.0f, display_density_);
-        l.margin = 16 * d;
-        l.header_h = 64 * d;
-        l.title_size = 20 * d;
-        l.small_size = 12 * d;
-        l.text_size = 15 * d;
-        l.page_title_size = 20 * d;
-        l.clock_size = 56 * d;
-        l.date_size = 16 * d;
-        l.title_y = 8 * d;
-        l.status_y = 30 * d;
-        l.detail_y = 47 * d;
-        l.stacked_header = true;
-
-        l.tabs_y = l.header_h + 8 * d;
-        l.tab_h = 48 * d;
-        l.tab_gap = 8 * d;
-        const float min_tab_w = 105 * d;
-        int cols = static_cast<int>(
-            (l.width - 2 * l.margin + l.tab_gap) / (min_tab_w + l.tab_gap));
-        cols = std::clamp(cols, 1, 5);
-        l.tab_cols = cols;
-        l.tab_rows = (kPageCount + cols - 1) / cols;
-        l.tab_w = (l.width - 2 * l.margin -
-                   l.tab_gap * (cols - 1)) / cols;
-        l.actions_y = l.tabs_y + l.tab_rows * (l.tab_h + l.tab_gap) + 8 * d;
-        l.action_h = 48 * d;
-        l.content_x = l.margin;
-        l.content_y = l.actions_y + l.action_h + 12 * d;
-        l.content_w = l.width - 2 * l.margin;
-        l.footer_h = 32 * d;
-        l.row_line = 30 * d;
-        l.label_w = std::min(130 * d, l.content_w * 0.42f);
-        l.scroll_step = 30 * d;
-    }
-    l.content_bottom = l.top + l.height - l.footer_h;
+    l.margin = metrics.margin;
+    l.header_h = metrics.header.h;
+    l.title_size = metrics.title_size;
+    l.small_size = metrics.secondary_size;
+    l.text_size = metrics.body_size;
+    l.page_title_size = metrics.title_size;
+    l.clock_size = metrics.hero_size;
+    l.date_size = metrics.section_size;
+    l.stacked_header = touch_;
+    l.action_h = metrics.button_height;
+    l.content_x = metrics.content.x;
+    l.content_y = metrics.content.y;
+    l.content_w = metrics.content.w;
+    l.content_bottom = l.top + metrics.content.y + metrics.content.h;
+    l.footer_h = 0.0f;
+    l.row_line = metrics.row_height;
+    l.label_w = std::min(170.0f * metrics.density, l.content_w * 0.42f);
+    l.scroll_step = 40.0f * metrics.density;
     return l;
 }
 
@@ -708,130 +659,110 @@ bool WatchView::selected_is_bonded() const
 
 void WatchView::drawHeader(Canvas &canvas, const Layout &layout)
 {
-    canvas.rect(layout.left, layout.top, layout.width, layout.header_h,
-                col::panel);
-    const float right = layout.left + layout.width - layout.margin;
+    const auto &palette = dark_palette();
+    const UiMetrics metrics = make_ui_metrics(
+        layout.width, layout.height, touch_, display_density_);
+    const Rect header = {layout.left + metrics.header.x,
+                         layout.top + metrics.header.y, metrics.header.w,
+                         metrics.header.h};
+    canvas.rect(header.x, header.y, header.w, header.h, palette.surface);
 
-    if (!layout.stacked_header) {
-        canvas.text("wristctl", layout.left + 20, layout.top + layout.title_y,
-                    layout.title_size, col::text);
-        canvas.textRight(status_line(snapshot_), right,
-                         layout.top + layout.status_y, layout.small_size,
-                         statusColor(snapshot_));
-        if (!snapshot_.error.empty()) {
-            canvas.textRight(snapshot_.error, right,
-                             layout.top + layout.detail_y, layout.small_size,
-                             col::red);
-        } else if (snapshot_.connected) {
-            canvas.textRight(snapshot_.model + "  " + snapshot_.address, right,
-                             layout.top + layout.detail_y, layout.small_size,
-                             col::dim);
+    auto utility = [&](const Rect &rect, const std::string &label, Route route) {
+        draw_button(canvas, rect, label,
+                    route_ == route ? ButtonVariant::Secondary
+                                    : ButtonVariant::Quiet,
+                    touch_ ? 12.0f * metrics.density : 14.0f);
+        hits_.push_back({rect, Action::Page, route_index(route), {}, 0, 0});
+    };
+
+    if (touch_) {
+        const bool compact = header.w < 500.0f * metrics.density;
+        const float utilities_width = compact
+            ? header.w - 2.0f * metrics.margin
+            : 270.0f * metrics.density;
+        if (!compact) {
+            canvas.text(std::string(route_name(route_)), header.x + metrics.margin,
+                        header.y + (header.h - 20.0f * metrics.density) * 0.5f,
+                        20.0f * metrics.density, palette.text_primary);
         }
+        const float gap = 6.0f * metrics.density;
+        const float width = (utilities_width - 2.0f * gap) / 3.0f;
+        const float x = header.x + header.w - metrics.margin - utilities_width;
+        const float y = header.y + (header.h - metrics.button_height) * 0.5f;
+        utility({x, y, width, metrics.button_height}, "Watch", Route::Watch);
+        utility({x + width + gap, y, width, metrics.button_height}, "Settings",
+                Route::Settings);
+        utility({x + 2.0f * (width + gap), y, width, metrics.button_height},
+                "Logs", Route::Diagnostics);
         return;
     }
 
-    canvas.text("wristctl", layout.left + layout.margin,
-                layout.top + layout.title_y, layout.title_size, col::text);
-    canvas.text(truncateToWidth(canvas, status_line(snapshot_),
-                                layout.content_w, layout.small_size),
-                layout.left + layout.margin, layout.top + layout.status_y,
-                layout.small_size, statusColor(snapshot_));
-    const std::string detail =
-        !snapshot_.error.empty()
-            ? snapshot_.error
-            : (snapshot_.connected
-                   ? snapshot_.model + "  " + snapshot_.address
-                   : std::string());
-    if (!detail.empty()) {
-        canvas.text(truncateToWidth(canvas, detail, layout.content_w,
-                                    layout.small_size),
-                    layout.left + layout.margin, layout.top + layout.detail_y,
-                    layout.small_size,
-                    snapshot_.error.empty() ? col::dim : col::red);
-    }
+    canvas.text(std::string(route_name(route_)), header.x + metrics.margin,
+                header.y + (header.h - 24.0f) * 0.5f, 24.0f,
+                palette.text_primary);
+    const Rect connection = {header.x + header.w - metrics.margin - 180.0f,
+                             header.y + 12.0f, 180.0f, 40.0f};
+    utility(connection, snapshot_.connected ? "Watch connected" : "Connect watch",
+            Route::Watch);
 }
 
 void WatchView::drawTabs(Canvas &canvas, const Layout &layout)
 {
-    for (int i = 0; i < kPageCount; i++) {
-        const int row = i / layout.tab_cols;
-        const int col = i % layout.tab_cols;
-        const float x = layout.left + layout.margin +
-                        col * (layout.tab_w + layout.tab_gap);
-        const float y = layout.top + layout.tabs_y +
-                        row * (layout.tab_h + layout.tab_gap);
-        addButton(canvas, x, y, layout.tab_w, layout.tab_h, kPageNames[i],
-                  Action::Page, i, page_ == i,
-                  touch_ ? layout.tab_h * 0.18f : 7.0f);
-    }
-}
+    const auto &palette = dark_palette();
+    const UiMetrics metrics = make_ui_metrics(
+        layout.width, layout.height, touch_, display_density_);
+    const Rect navigation = {layout.left + metrics.navigation.x,
+                             layout.top + metrics.navigation.y,
+                             metrics.navigation.w, metrics.navigation.h};
+    canvas.rect(navigation.x, navigation.y, navigation.w, navigation.h,
+                palette.surface);
+    constexpr Route primary[] = {Route::Overview, Route::Time, Route::Alarms,
+                                 Route::Timer, Route::Phone};
+    constexpr const char *labels[] = {"Overview", "Time", "Alarms", "Timer",
+                                      "Phone"};
 
-void WatchView::drawActions(Canvas &canvas, const Layout &layout)
-{
-    const float y = layout.top + layout.actions_y;
-    const float radius = touch_ ? layout.action_h * 0.2f : 7.0f;
-
-    if (!snapshot_.connected) {
-        if (!snapshot_.supports_scan || snapshot_.demo) {
-            const float w = touch_ ? std::min(200 * display_density_,
-                                              layout.content_w)
-                                   : 110.0f;
-            addButton(canvas, layout.left + layout.content_x, y, w,
-                      layout.action_h,
-                      snapshot_.busy ? "Scanning..." : "Connect",
-                      Action::Connect, 0, false, radius);
-            return;
-        }
-
-        const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-        const float gap = 8 * d;
-        const float w = (layout.content_w - gap) / 2;
-        float x = layout.left + layout.content_x;
-        const bool scanning = snapshot_.scanning;
-        addButton(canvas, x, y, w, layout.action_h,
-                  scanning ? "Stop scan" : "Scan",
-                  scanning ? Action::StopScan : Action::Scan, 0, false, radius);
-        x += w + gap;
-        if (!selected_address_.empty()) {
-            addButton(canvas, x, y, w, layout.action_h,
-                      selected_is_bonded() ? "Connect" : "Pair & connect",
-                      Action::ConnectSelected, 0, false, radius);
-        } else {
-            canvas.button(x, y, w, layout.action_h, "Pair & connect",
-                          col::btnWait, col::dim, radius);
+    if (touch_) {
+        const float width = navigation.w / 5.0f;
+        for (int index = 0; index < 5; ++index) {
+            const Rect rect = {navigation.x + index * width, navigation.y + 6.0f,
+                               width, navigation.h - 12.0f};
+            draw_button(canvas, rect, labels[index],
+                        route_ == primary[index] ? ButtonVariant::Secondary
+                                                 : ButtonVariant::Quiet,
+                        12.0f * metrics.density);
+            hits_.push_back(
+                {rect, Action::Page, route_index(primary[index]), {}, 0, 0});
         }
         return;
     }
 
-    if (!touch_) {
-        float x = layout.left + 20;
-        addButton(canvas, x, y, 110, layout.action_h, "Disconnect",
-                  Action::Disconnect, 0, false, radius);
-        x += 118;
-        addButton(canvas, x, y, 90, layout.action_h, "Refresh",
-                  Action::Refresh, 0, false, radius);
-        x += 98;
-        addButton(canvas, x, y, 100, layout.action_h, "Sync time",
-                  Action::SyncTime, 0, false, radius);
-        return;
+    canvas.text("wristctl", navigation.x + 24.0f, navigation.y + 26.0f, 26.0f,
+                palette.text_primary);
+    for (int index = 0; index < 5; ++index) {
+        const Rect rect = {navigation.x + 16.0f,
+                           navigation.y + 92.0f + index * 56.0f,
+                           navigation.w - 32.0f, 44.0f};
+        draw_button(canvas, rect, labels[index],
+                    route_ == primary[index] ? ButtonVariant::Secondary
+                                             : ButtonVariant::Quiet,
+                    16.0f);
+        hits_.push_back(
+            {rect, Action::Page, route_index(primary[index]), {}, 0, 0});
     }
-
-    const float gap = 8 * display_density_;
-    const float w = (layout.content_w - 2 * gap) / 3;
-    float x = layout.left + layout.content_x;
-    auto action_button = [&](const char *label, Action action) {
-        canvas.button(x, y, w, layout.action_h, "", col::btnIdle, col::text,
-                      radius);
-        const float size = layout.text_size;
-        const float tw = canvas.textWidth(label, size);
-        canvas.text(label, x + (w - tw) * 0.5f,
-                    y + (layout.action_h - size) * 0.5f, size, col::text);
-        hits_.push_back({{x, y, w, layout.action_h}, action, 0, {}});
-        x += w + gap;
-    };
-    action_button("Disconnect", Action::Disconnect);
-    action_button("Refresh", Action::Refresh);
-    action_button("Sync time", Action::SyncTime);
+    constexpr Route utilities[] = {Route::Watch, Route::Settings,
+                                   Route::Diagnostics};
+    constexpr const char *utility_labels[] = {"Watch", "Settings", "Diagnostics"};
+    for (int index = 0; index < 3; ++index) {
+        const Rect rect = {navigation.x + 16.0f,
+                           navigation.y + navigation.h - 156.0f + index * 46.0f,
+                           navigation.w - 32.0f, 40.0f};
+        draw_button(canvas, rect, utility_labels[index],
+                    route_ == utilities[index] ? ButtonVariant::Secondary
+                                               : ButtonVariant::Quiet,
+                    14.0f);
+        hits_.push_back(
+            {rect, Action::Page, route_index(utilities[index]), {}, 0, 0});
+    }
 }
 
 float WatchView::drawWatchPage(Canvas &canvas, const Layout &layout)
@@ -840,7 +771,7 @@ float WatchView::drawWatchPage(Canvas &canvas, const Layout &layout)
         return drawPairPage(canvas, layout);
     }
 
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
     float cursor = top;
@@ -902,7 +833,7 @@ float WatchView::drawWatchPage(Canvas &canvas, const Layout &layout)
 
 float WatchView::drawPairPage(Canvas &canvas, const Layout &layout)
 {
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
     const float w = layout.content_w;
@@ -1093,7 +1024,7 @@ float WatchView::drawClockPage(Canvas &canvas, const Layout &layout)
 
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
     const float gap = 8 * d;
     const float btn_h = touch_ ? 40 * d : 30.0f;
@@ -1271,7 +1202,7 @@ float WatchView::drawClockPage(Canvas &canvas, const Layout &layout)
 
 float WatchView::drawAlarmsPage(Canvas &canvas, const Layout &layout)
 {
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
     const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
@@ -1370,7 +1301,7 @@ float WatchView::drawAlarmsPage(Canvas &canvas, const Layout &layout)
 
 float WatchView::drawTimerPage(Canvas &canvas, const Layout &layout)
 {
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
     const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
@@ -1467,7 +1398,7 @@ float WatchView::drawTimerPage(Canvas &canvas, const Layout &layout)
 
 float WatchView::drawNotifyPage(Canvas &canvas, const Layout &layout)
 {
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
     const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
@@ -1589,7 +1520,7 @@ float WatchView::drawNotifyPage(Canvas &canvas, const Layout &layout)
 
 float WatchView::drawSettingsPage(Canvas &canvas, const Layout &layout)
 {
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
     const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
@@ -1674,7 +1605,7 @@ float WatchView::drawSettingsPage(Canvas &canvas, const Layout &layout)
 
 float WatchView::drawConsolePage(Canvas &canvas, const Layout &layout)
 {
-    const float scroll = page_scroll(page_);
+    const float scroll = page_scroll(route_index(route_));
     const float top = layout.top + layout.content_y;
     const float x = layout.left + layout.content_x;
     float cursor = top;
@@ -1854,14 +1785,53 @@ void WatchView::handleClick(float x, float y)
         if (!it->rect.contains(x, y)) {
             continue;
         }
+        if (snapshot_.demo && demo_scenario_ != DemoScenario::Recorded) {
+            switch (it->action) {
+            case Action::Page:
+            case Action::SelectDevice:
+            case Action::ToggleAll:
+            case Action::AlarmToggle:
+            case Action::AlarmMode:
+            case Action::AlarmChime:
+            case Action::AlarmHour:
+            case Action::AlarmMinute:
+            case Action::AlarmRevert:
+            case Action::TimerRepeat:
+            case Action::TimerMinutes:
+            case Action::TimerSeconds:
+            case Action::TimerBeep:
+            case Action::TimerInitialize:
+            case Action::TimerRevert:
+            case Action::ClockUnit:
+            case Action::CityTimezone:
+            case Action::CityDstDiff:
+            case Action::CityDstToggle:
+            case Action::CityRevert:
+            case Action::ToggleHomeCard:
+            case Action::ToggleAppTimeFormat:
+            case Action::SettingToggle:
+            case Action::SettingCycle:
+            case Action::SettingsRevert:
+            case Action::EditField:
+            case Action::NotifyType:
+            case Action::EditorKey:
+            case Action::EditorSpace:
+            case Action::EditorBackspace:
+            case Action::EditorDone:
+            case Action::EditorCancel:
+                break;
+            default:
+                return;
+            }
+        }
         switch (it->action) {
         case Action::Connect:
             worker_.connect();
             break;
         case Action::Scan:
             selected_address_.clear();
-            page_ = 1;
-            settings_.route = route_from_legacy_page(page_);
+            route_ = Route::Watch;
+            settings_.route = route_;
             save_settings(settings_);
             worker_.scan();
             break;
@@ -1952,9 +1922,11 @@ void WatchView::handleClick(float x, float y)
             break;
         }
         case Action::Page:
-            page_ = it->page;
-            settings_.route = route_from_legacy_page(page_);
-            save_settings(settings_);
+            if (it->page >= 0 && it->page < kRouteCount) {
+                route_ = static_cast<Route>(it->page);
+                settings_.route = route_;
+                save_settings(settings_);
+            }
             break;
         case Action::AlarmToggle:
             if (it->arg == 0) {
@@ -2303,6 +2275,19 @@ void WatchView::drawFrame()
         }
         sync_drafts();
     }
+    if (snapshot_.demo && demo_scenario_ != DemoScenario::Recorded) {
+        snapshot_ = make_demo_snapshot(latest, demo_scenario_);
+        const bool preview_dirty = demo_scenario_ == DemoScenario::Dirty ||
+                                   demo_scenario_ == DemoScenario::Confirmation;
+        const bool preview_confirmation =
+            demo_scenario_ == DemoScenario::Confirmation;
+        alarms_dirty_ = preview_dirty;
+        alarms_confirm_ = preview_confirmation;
+        timer_dirty_ = preview_dirty;
+        timer_confirm_ = preview_confirmation;
+        clock_dirty_ = preview_dirty;
+        clock_confirm_ = preview_confirmation;
+    }
 
     curves_.clear();
     shapes_.clear();
@@ -2336,42 +2321,38 @@ void WatchView::drawFrame()
 
     const float clip_y = layout.top + layout.content_y;
     const float clip_h = std::max(0.0f, layout.content_bottom - clip_y);
-    clamp_scroll(page_, static_cast<float>(last_page_height_), clip_h);
+    clamp_scroll(route_index(route_), static_cast<float>(last_page_height_),
+                 clip_h);
 
-    canvas.setClip(layout.left, clip_y, layout.content_w, clip_h);
+    canvas.setClip(layout.left + layout.content_x, clip_y, layout.content_w,
+                   clip_h);
     float page_height = 0;
-    switch (page_) {
-    case 0:
-        page_height = drawHomePage(canvas, layout);
+    switch (route_) {
+    case Route::Overview:
+        page_height = drawOverviewPage(canvas, layout);
         break;
-    case 1:
+    case Route::Watch:
         page_height = drawWatchPage(canvas, layout);
         break;
-    case 2:
+    case Route::Time:
         page_height = drawClockPage(canvas, layout);
         break;
-    case 3:
+    case Route::Alarms:
         page_height = drawAlarmsPage(canvas, layout);
         break;
-    case 4:
+    case Route::Timer:
         page_height = drawTimerPage(canvas, layout);
         break;
-    case 5:
-        page_height = drawTrainingPage(canvas, layout);
-        break;
-    case 6:
-        page_height = drawActivityPage(canvas, layout);
-        break;
-    case 7:
+    case Route::Phone:
         page_height = drawNotifyPage(canvas, layout);
         break;
-    case 8:
+    case Route::Settings:
         page_height = drawSettingsPage(canvas, layout);
         break;
-    case 9:
+    case Route::Diagnostics:
         page_height = drawConsolePage(canvas, layout);
         break;
-    default:
+    case Route::Count:
         break;
     }
     canvas.clearClip();
@@ -2382,7 +2363,6 @@ void WatchView::drawFrame()
     // never paint over a header or footer.
     drawHeader(canvas, layout);
     drawTabs(canvas, layout);
-    drawActions(canvas, layout);
     drawFooter(canvas, layout);
     drawEditor(canvas, layout);
 
@@ -2400,32 +2380,39 @@ void WatchView::handleInput()
         }
         return;
     }
-    for (int key = 0; key < kPageCount; key++) {
-        const int code = key == 9 ? 0x30 : 0x31 + key;
-        if (input().keyWentDown(code)) {
-            page_ = key;
-            settings_.route = route_from_legacy_page(page_);
+    constexpr Route primary[] = {Route::Overview, Route::Time, Route::Alarms,
+                                 Route::Timer, Route::Phone};
+    for (int key = 0; key < 5; key++) {
+        if (input().keyWentDown(0x31 + key)) {
+            route_ = primary[key];
+            settings_.route = route_;
             save_settings(settings_);
             dirty_ = true;
         }
     }
-    if (input().keyWentDown(0x43)) { // C
+    const bool fixture_preview =
+        snapshot_.demo && demo_scenario_ != DemoScenario::Recorded;
+    if (!fixture_preview && input().keyWentDown(0x43)) { // C
         settings_.auto_connect = true;
         save_settings(settings_);
         worker_.set_auto_connect(true);
         worker_.connect();
         dirty_ = true;
     }
-    if (input().keyWentDown(0x52)) { // R
+    if (!fixture_preview && input().keyWentDown(0x52)) { // R
         worker_.refresh();
         dirty_ = true;
     }
-    if (input().keyWentDown(0x54)) { // T
+    if (!fixture_preview && input().keyWentDown(0x54)) { // T
         worker_.sync_time();
         dirty_ = true;
     }
     if (input().keyWentDown(key::Escape)) {
-        running_ = false;
+        if (detail_ != Detail::None) {
+            close_detail();
+        } else {
+            running_ = false;
+        }
     }
 }
 

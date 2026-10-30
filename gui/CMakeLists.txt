@@ -69,6 +69,8 @@ add_executable(wristctl_gui
     src/gui_main.cc
     src/watch_view.cc
     src/watch_view_features.cc
+    src/watch_view_overview.cc
+    src/demo_scenarios.cc
     src/ble_worker.cc
     src/bluez_link.cc
     src/settings.cc
@@ -111,6 +113,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries(ui_layout_test PRIVATE vk_canvas_core)
     target_compile_options(ui_layout_test PRIVATE -Wall -Wextra)
     add_test(NAME ui_layout_test COMMAND ui_layout_test)
+
+    add_executable(demo_scenarios_test
+        tests/demo_scenarios_test.cc src/demo_scenarios.cc)
+    target_include_directories(demo_scenarios_test PRIVATE src)
+    target_link_libraries(demo_scenarios_test PRIVATE wristctl_core)
+    target_compile_options(demo_scenarios_test PRIVATE -Wall -Wextra)
+    add_test(NAME demo_scenarios_test COMMAND demo_scenarios_test)
 
     add_executable(watch_model_test tests/watch_model_test.cc)
     target_include_directories(watch_model_test PRIVATE src)
