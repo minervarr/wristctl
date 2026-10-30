@@ -68,8 +68,13 @@ vce_compile_slang(compile_canvas_shaders
 add_executable(wristctl_gui
     src/gui_main.cc
     src/watch_view.cc
+    src/watch_view_features.cc
     src/ble_worker.cc
-    src/settings.cc)
+    src/bluez_link.cc
+    src/settings.cc
+    src/ui_navigation.cc
+    src/sntp_client.cc
+    src/utc_sync.cc)
 
 target_link_libraries(wristctl_gui PRIVATE
     wristctl_core
@@ -85,11 +90,41 @@ target_compile_options(wristctl_gui PRIVATE -Wall -Wextra)
 add_dependencies(wristctl_gui compile_font_shaders compile_canvas_shaders)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_executable(settings_test tests/settings_test.cc src/settings.cc)
+    add_executable(settings_test
+        tests/settings_test.cc src/settings.cc src/ui_navigation.cc)
     target_link_libraries(settings_test PRIVATE arc_fs)
     target_include_directories(settings_test PRIVATE src)
     target_compile_options(settings_test PRIVATE -Wall -Wextra)
     add_test(NAME settings_test COMMAND settings_test)
+
+    add_executable(ui_navigation_test
+        tests/ui_navigation_test.cc src/ui_navigation.cc)
+    target_include_directories(ui_navigation_test PRIVATE src)
+    target_compile_options(ui_navigation_test PRIVATE -Wall -Wextra)
+    add_test(NAME ui_navigation_test COMMAND ui_navigation_test)
+
+    add_executable(watch_model_test tests/watch_model_test.cc)
+    target_include_directories(watch_model_test PRIVATE src)
+    target_link_libraries(watch_model_test PRIVATE wristctl_core)
+    target_compile_options(watch_model_test PRIVATE -Wall -Wextra)
+    add_test(NAME watch_model_test COMMAND watch_model_test)
+
+    add_executable(reconnect_test tests/reconnect_test.cc)
+    target_include_directories(reconnect_test PRIVATE src)
+    target_compile_options(reconnect_test PRIVATE -Wall -Wextra)
+    add_test(NAME reconnect_test COMMAND reconnect_test)
+
+    add_executable(sntp_client_test tests/sntp_client_test.cc src/sntp_client.cc)
+    target_include_directories(sntp_client_test PRIVATE src)
+    target_link_libraries(sntp_client_test PRIVATE Threads::Threads)
+    target_compile_options(sntp_client_test PRIVATE -Wall -Wextra)
+    add_test(NAME sntp_client_test COMMAND sntp_client_test)
+
+    add_executable(utc_sync_test tests/utc_sync_test.cc src/utc_sync.cc)
+    target_include_directories(utc_sync_test PRIVATE src)
+    target_link_libraries(utc_sync_test PRIVATE wristctl_core)
+    target_compile_options(utc_sync_test PRIVATE -Wall -Wextra)
+    add_test(NAME utc_sync_test COMMAND utc_sync_test)
 endif()
 
 # Shaders are looked up beside the executable, which is where
