@@ -73,6 +73,9 @@ add_executable(wristctl_gui
     src/bluez_link.cc
     src/settings.cc
     src/ui_navigation.cc
+    src/ui_theme.cc
+    src/ui_layout.cc
+    src/ui_components.cc
     src/sntp_client.cc
     src/utc_sync.cc)
 
@@ -102,6 +105,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_include_directories(ui_navigation_test PRIVATE src)
     target_compile_options(ui_navigation_test PRIVATE -Wall -Wextra)
     add_test(NAME ui_navigation_test COMMAND ui_navigation_test)
+
+    add_executable(ui_layout_test tests/ui_layout_test.cc src/ui_layout.cc)
+    target_include_directories(ui_layout_test PRIVATE src)
+    target_link_libraries(ui_layout_test PRIVATE vk_canvas_core)
+    target_compile_options(ui_layout_test PRIVATE -Wall -Wextra)
+    add_test(NAME ui_layout_test COMMAND ui_layout_test)
 
     add_executable(watch_model_test tests/watch_model_test.cc)
     target_include_directories(watch_model_test PRIVATE src)
