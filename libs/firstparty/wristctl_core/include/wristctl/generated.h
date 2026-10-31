@@ -48,6 +48,7 @@ typedef struct wc_alarm_first {
     uint8_t enabled;
     uint8_t one_time;
     uint8_t hourly_chime;
+    uint8_t constant;
     uint8_t hour;
     uint8_t minute;
 } wc_alarm_first;
@@ -61,6 +62,7 @@ typedef struct wc_alarm_rest_alarms_item {
     uint8_t enabled;
     uint8_t one_time;
     uint8_t hourly_chime;
+    uint8_t constant;
     uint8_t hour;
     uint8_t minute;
 } wc_alarm_rest_alarms_item;

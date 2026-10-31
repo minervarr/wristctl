@@ -70,9 +70,12 @@ class ErrorTests(unittest.TestCase):
         with self.assertRaises(codecs.ProtoError):
             codecs.decode_current_time(bytes.fromhex("09ea070a1b10290902c400"))
 
-    def test_alarm_constant_byte(self) -> None:
-        with self.assertRaises(codecs.ProtoError):
-            codecs.decode_alarm_first(bytes([0x15, 0x40, 0x00, 7, 30]))
+    def test_alarm_constant_is_not_fixed(self) -> None:
+        # Reset GBX-100 returns constant=0 for a disabled alarm; enabled
+        # vectors carry 0x40. Both are valid.
+        value = codecs.decode_alarm_first(bytes([0x15, 0x40, 0x00, 7, 30]))
+        self.assertEqual(value.constant, 0)
+        self.assertTrue(value.enabled)
 
     def test_range_on_encode(self) -> None:
         value = codecs.CurrentTime(2026, 13, 27, 16, 41, 9, 2, 0)

@@ -8,6 +8,7 @@
     "enabled": true,
     "one_time": false,
     "hourly_chime": false,
+    "constant": 64,
     "hour": 7,
     "minute": 30
   }

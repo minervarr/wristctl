@@ -140,6 +140,7 @@ class AlarmFirst:
     enabled: bool
     one_time: bool
     hourly_chime: bool
+    constant: int
     hour: int
     minute: int
 
@@ -148,13 +149,12 @@ def decode_alarm_first(frame: bytes) -> AlarmFirst:
         raise ProtoError(f"alarm_first: need 5 bytes, got {len(frame)}")
     if frame[0] != 21:
         raise ProtoError(f"alarm_first: class byte {frame[0]:#04x}, expected 0x15")
-    if frame[2] != 64:
-        raise ProtoError(f"alarm_first: byte 2 is {frame[2]:#04x}, expected 0x40")
     return AlarmFirst(
         flag=frame[1],
         enabled=bool(frame[1] & 64),
         one_time=bool(frame[1] & 32),
         hourly_chime=bool(frame[1] & 128),
+        constant=frame[2],
         hour=frame[3],
         minute=frame[4],
     )
@@ -162,7 +162,7 @@ def decode_alarm_first(frame: bytes) -> AlarmFirst:
 def encode_alarm_first(value: AlarmFirst) -> bytes:
     out = bytearray(5)
     out[0] = 0x15
-    out[2] = 64
+    out[2] = value.constant
     _check_range('alarm_first.hour', value.hour, 0, 23)
     out[3] = value.hour
     _check_range('alarm_first.minute', value.minute, 0, 59)
@@ -180,23 +180,23 @@ class AlarmRestAlarmsItem:
     enabled: bool
     one_time: bool
     hourly_chime: bool
+    constant: int
     hour: int
     minute: int
 
 def _decode_alarm_rest_alarms_item(chunk: bytes) -> AlarmRestAlarmsItem:
-    if chunk[1] != 64:
-        raise ProtoError(f"alarm_rest_alarms: byte 1 is {chunk[1]:#04x}, expected 0x40")
     return AlarmRestAlarmsItem(
         flag=chunk[0],
         enabled=bool(chunk[0] & 64),
         one_time=bool(chunk[0] & 32),
         hourly_chime=bool(chunk[0] & 128),
+        constant=chunk[1],
         hour=chunk[2],
         minute=chunk[3],
     )
 
 def _encode_alarm_rest_alarms_item(value: AlarmRestAlarmsItem, out: bytearray, base: int) -> None:
-    out[base + 1] = 64
+    out[base + 1] = value.constant
     _check_range('alarm_rest_alarms.hour', value.hour, 0, 23)
     out[base + 2] = value.hour
     _check_range('alarm_rest_alarms.minute', value.minute, 0, 59)

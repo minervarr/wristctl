@@ -1,12 +1,12 @@
 PY ?= python3
 UI_PY ?= .venv/bin/python
 GRADLE ?= ./gradlew
-BUILD ?= build
-GUI_BUILD ?= build-gui
+ANDROID_SERIAL ?= 192.168.101.6:44427
+BUILD ?= build/linux_debug
 CORE := libs/firstparty/wristctl_core
 GEN := $(CORE)/gen
 
-.PHONY: generate configure build test check clean ui ui-demo gui gui-live android android-lint android-install
+.PHONY: generate build test test-c test-py test-tool check clean ui ui-demo gui gui-live android android-lint android-install
 
 generate:
 	$(PY) $(GEN)/extract_models.py --check
@@ -15,24 +15,29 @@ generate:
 	$(PY) $(GEN)/gen_models.py
 	$(PY) $(GEN)/gen_vectors.py
 
-configure:
-	cmake -S . -B $(BUILD) -G Ninja -DCMAKE_BUILD_TYPE=Debug
+# The build tool owns configure/build. `build/` is one root with one
+# subdirectory per variant: linux_debug, linux, linux_native, linux_custom-*.
+build:
+	./scripts/build.sh build --debug
 
-build: configure
-	cmake --build $(BUILD)
+# Regenerate the committed codecs, then build Debug and run CTest plus the
+# Python suites. `./scripts/build.sh test` is the same path without make.
+test:
+	./scripts/build.sh test
 
-# Generation is explicit: the committed codecs are what Android ships, and
-# CMake never shells out to Python.
-test: generate test-c test-py
-
-test-c: configure
-	cmake --build $(BUILD)
+# CTest only; builds core/CLI first if the variant directory does not exist.
+test-c:
+	test -d $(BUILD) || ./scripts/build.sh build --debug --no-gui
 	ctest --test-dir $(BUILD) --output-on-failure
 
 test-py:
 	PYTHONPATH=py $(PY) -m unittest discover -s py/tests
 
-check: test
+# The builder's own tests (paths, CLI dry-run); no toolchain needed.
+test-tool:
+	PYTHONPATH=scripts/src $(PY) -m unittest discover -s scripts/tests
+
+check: test test-tool
 
 ui:
 	PYTHONPATH=py $(UI_PY) -m wristctl_proto.ui
@@ -43,14 +48,12 @@ ui-demo:
 # The app links the core target, so run `make test` first when the spec
 # changed; otherwise the APK carries stale codecs.
 gui:
-	cmake -S . -B $(GUI_BUILD) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DWRISTCTL_BUILD_GUI=ON
-	cmake --build $(GUI_BUILD)
-	$(GUI_BUILD)/gui/wristctl_gui
+	./scripts/build.sh build --debug --gui
+	exec $(BUILD)/gui/wristctl_gui
 
 gui-live:
-	cmake -S . -B $(GUI_BUILD) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DWRISTCTL_BUILD_GUI=ON
-	cmake --build $(GUI_BUILD)
-	$(GUI_BUILD)/gui/wristctl_gui --connect
+	./scripts/build.sh build --debug --gui
+	exec $(BUILD)/gui/wristctl_gui --connect
 
 android:
 	cd android && $(GRADLE) :app:assembleDebug
@@ -59,8 +62,8 @@ android-lint:
 	cd android && $(GRADLE) :app:lintDebug
 
 android-install: android
-	adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+	adb -s $(ANDROID_SERIAL) install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 clean:
-	rm -rf $(BUILD) $(GUI_BUILD) $(CORE)/build
+	rm -rf build $(CORE)/build
 	find py -name '__pycache__' -type d -prune -exec rm -rf {} +
