@@ -26,16 +26,6 @@ namespace {
 
 constexpr int kPollTimer = 1;
 
-std::string offset_text(int quarters, bool utc)
-{
-    const int minutes = quarters * 15;
-    const int magnitude = minutes < 0 ? -minutes : minutes;
-    char text[32];
-    std::snprintf(text, sizeof text, "%s%s%02d:%02d", utc ? "UTC" : "",
-                  minutes < 0 ? "-" : "+", magnitude / 60, magnitude % 60);
-    return text;
-}
-
 } // namespace
 
 WatchView::WatchView(bool auto_connect, bool demo)
@@ -731,227 +721,6 @@ void WatchView::drawTabs(Canvas &canvas, const Layout &layout)
     }
 }
 
-float WatchView::drawClockPage(Canvas &canvas, const Layout &layout)
-{
-    auto display_now = std::chrono::system_clock::now();
-    const bool corrected = settings_.use_ntp && snapshot_.has_time_sample;
-    if (corrected) {
-        display_now = snapshot_.time_corrected_at +
-                      std::chrono::duration_cast<
-                          std::chrono::system_clock::duration>(
-                          std::chrono::steady_clock::now() -
-                          snapshot_.time_sampled_at);
-    }
-    std::tm calendar{};
-    if (settings_.use_ntp) {
-        calendar = utc_tm(display_now);
-    } else {
-        const std::time_t seconds =
-            std::chrono::system_clock::to_time_t(display_now);
-        localtime_r(&seconds, &calendar);
-    }
-
-    const bool show_24h = !snapshot_.has_settings ||
-                          edit_settings_.time_format_24h != 0;
-    char clock[32];
-    char date[64];
-    std::strftime(clock, sizeof clock,
-                  settings_.app_time_24h ? "%H:%M:%S" : "%I:%M:%S %p",
-                  &calendar);
-    std::strftime(date, sizeof date, "%A %d %B %Y", &calendar);
-
-    std::string zone_label;
-    if (corrected) {
-        zone_label = "SNTP UTC: " + snapshot_.time_server;
-    } else if (settings_.use_ntp) {
-        zone_label = "UTC preview uses the device clock until SNTP succeeds";
-    } else {
-        const char *zone = std::getenv("TZ");
-        zone_label = (zone != nullptr && *zone != '\0')
-                         ? std::string("watch timezone: ") + zone
-                         : std::string(touch_
-                                           ? "device local time"
-                                           : "host local time (no --timezone set)");
-    }
-
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    const float scroll = page_scroll(route_index(route_));
-    const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-    const float gap = 8 * d;
-    const float btn_h = touch_ ? 40 * d : 30.0f;
-    const float half = (layout.content_w - gap) / 2;
-    float cursor = top;
-
-    canvas.text(clock, x, cursor - scroll, layout.clock_size, col::text);
-    cursor += layout.clock_size * 1.1f;
-    canvas.text(date, x, cursor - scroll, layout.date_size, col::dim);
-    cursor += layout.date_size * 1.6f;
-    cursor = drawWrapped(canvas, zone_label, x, cursor - scroll,
-                         layout.content_w, layout.small_size, col::dim,
-                         layout.small_size * 1.4f) +
-             scroll + gap;
-
-    addButton(canvas, x, cursor - scroll, half, btn_h,
-              settings_.use_ntp ? "Source: SNTP UTC" : "Source: device local",
-              Action::ToggleTimeSource, 0, settings_.use_ntp, btn_h * 0.18f);
-    addButton(canvas, x + half + gap, cursor - scroll, half, btn_h,
-              settings_.sync_on_connect ? "Sync on connect: On"
-                                        : "Sync on connect: Off",
-              Action::ToggleSyncOnConnect, 0, settings_.sync_on_connect,
-              btn_h * 0.18f);
-    cursor += btn_h + gap;
-
-    addButton(canvas, x, cursor - scroll, half, btn_h, "Edit SNTP servers",
-              Action::EditField, 0, false, btn_h * 0.18f, EDIT_NTP_SERVERS);
-    addButton(canvas, x + half + gap, cursor - scroll, half, btn_h, "Sync now",
-              Action::SyncTime, 0, false, btn_h * 0.18f);
-    cursor += btn_h + gap;
-
-    if (settings_.use_ntp) {
-        cursor = drawWrapped(canvas, "Servers, in order: " + ntp_server_text_, x,
-                             cursor - scroll, layout.content_w,
-                             layout.small_size, col::dim,
-                             layout.small_size * 1.4f) +
-                 scroll + gap;
-    }
-
-    if (snapshot_.has_settings) {
-        addButton(canvas, x, cursor - scroll, half, btn_h,
-                  show_24h ? "Watch display: 24H" : "Watch display: 12H",
-                  Action::SettingToggle, 0, show_24h, btn_h * 0.18f, 0);
-        addButton(canvas, x + half + gap, cursor - scroll, half, btn_h,
-                  "Apply display format", Action::SettingsApply, 0,
-                  settings_dirty_, btn_h * 0.18f);
-        cursor += btn_h + gap;
-    }
-
-    addButton(canvas, x, cursor - scroll, layout.content_w, btn_h,
-              settings_.app_time_24h ? "App display: 24H" : "App display: 12H",
-              Action::ToggleAppTimeFormat, 0, settings_.app_time_24h,
-              btn_h * 0.18f);
-    cursor += btn_h + gap;
-
-    if (snapshot_.has_clock) {
-        cursor = drawSectionTitle(canvas, layout, "Cities and DST", x,
-                                  cursor - scroll) +
-                 scroll;
-        static const char *const units[] = {"Home", "World", "City 3",
-                                            "City 4", "City 5"};
-        const float unit_w = (layout.content_w - 4 * gap) / 5;
-        for (int unit = 0; unit < 5; unit++) {
-            addButton(canvas, x + unit * (unit_w + gap), cursor - scroll, unit_w,
-                      btn_h, units[unit], Action::ClockUnit, 0,
-                      clock_unit_ == unit, btn_h * 0.18f, unit);
-        }
-        cursor += btn_h + gap;
-
-        const wc_dst_setting &city = edit_dst_settings_[clock_unit_];
-        char city_id[16];
-        std::snprintf(city_id, sizeof city_id, "0x%04x", city.city);
-        cursor = drawKeyValue(canvas, layout, "City ID (preserved)", city_id, x,
-                              cursor - scroll) +
-                 scroll;
-        canvas.text("City label", x, cursor - scroll, layout.small_size,
-                    col::dim);
-        canvas.text(truncateToWidth(canvas, edit_city_name_,
-                                    layout.content_w - layout.label_w - 90 * d,
-                                    layout.text_size),
-                    x + layout.label_w, cursor - scroll, layout.text_size,
-                    col::text);
-        addButton(canvas, x + layout.content_w - 80 * d, cursor - scroll - 4 * d,
-                  80 * d, btn_h, "Edit", Action::EditField, 0, false,
-                  btn_h * 0.18f, EDIT_CITY_NAME);
-        cursor += btn_h + gap;
-
-        cursor = drawKeyValue(canvas, layout, "UTC offset",
-                              offset_text(city.timezone, true), x,
-                              cursor - scroll) +
-                 scroll;
-        addButton(canvas, x, cursor - scroll, half, btn_h, "-15 minutes",
-                  Action::CityTimezone, 0, false, btn_h * 0.18f, -1);
-        addButton(canvas, x + half + gap, cursor - scroll, half, btn_h,
-                  "+15 minutes", Action::CityTimezone, 0, false, btn_h * 0.18f,
-                  1);
-        cursor += btn_h + gap;
-
-        cursor = drawKeyValue(canvas, layout, "DST difference",
-                              offset_text(city.dst_diff, false), x,
-                              cursor - scroll) +
-                 scroll;
-        addButton(canvas, x, cursor - scroll, half, btn_h, "-15 minutes",
-                  Action::CityDstDiff, 0, false, btn_h * 0.18f, -1);
-        addButton(canvas, x + half + gap, cursor - scroll, half, btn_h,
-                  "+15 minutes", Action::CityDstDiff, 0, false, btn_h * 0.18f,
-                  1);
-        cursor += btn_h + gap;
-
-        if (clock_unit_ < 2) {
-            const bool dst_on = clock_unit_ == 0
-                                    ? edit_dst_state_.dst_on_home != 0
-                                    : edit_dst_state_.dst_on_world != 0;
-            const bool dst_auto = clock_unit_ == 0
-                                      ? edit_dst_state_.dst_auto_home != 0
-                                      : edit_dst_state_.dst_auto_world != 0;
-            addButton(canvas, x, cursor - scroll, half, btn_h,
-                      dst_on ? "DST: On" : "DST: Off", Action::CityDstToggle, 0,
-                      dst_on, btn_h * 0.18f, 0);
-            addButton(canvas, x + half + gap, cursor - scroll, half, btn_h,
-                      dst_auto ? "Auto DST: On" : "Auto DST: Off",
-                      Action::CityDstToggle, 0, dst_auto, btn_h * 0.18f, 1);
-            cursor += btn_h + gap;
-        }
-
-        addButton(canvas, x, cursor - scroll, half, layout.action_h,
-                  clock_confirm_ ? "Tap again to write city" : "Apply city",
-                  Action::CityApply, 0, clock_dirty_, layout.action_h * 0.2f);
-        addButton(canvas, x + half + gap, cursor - scroll, half, layout.action_h,
-                  "Revert cities", Action::CityRevert, 0, false,
-                  layout.action_h * 0.2f);
-        cursor += layout.action_h + gap;
-        cursor = drawWrapped(
-                     canvas,
-                     "City writes preserve the numeric city ID and unread "
-                     "protocol fields. UTC and DST offsets use 15-minute units. "
-                     "Apply is confirmed twice and reads all five slots back.",
-                     x, cursor - scroll, layout.content_w, layout.small_size,
-                     col::dim, layout.small_size * 1.4f) +
-                 scroll + gap;
-    }
-
-    if (snapshot_.has_time_sample) {
-        char diagnostics[160];
-        std::snprintf(diagnostics, sizeof diagnostics,
-                      "Last SNTP sample: %s  offset %.3f ms  RTT %.3f ms",
-                      snapshot_.time_server.c_str(), snapshot_.time_offset_ms,
-                      snapshot_.time_round_trip_ms);
-        cursor = drawWrapped(canvas, diagnostics, x, cursor - scroll,
-                             layout.content_w, layout.small_size, col::dim,
-                             layout.small_size * 1.4f) +
-                 scroll + gap;
-    }
-    if (settings_.use_ntp && !snapshot_.time_error.empty()) {
-        cursor = drawWrapped(canvas, snapshot_.time_error, x, cursor - scroll,
-                             layout.content_w, layout.small_size, col::red,
-                             layout.small_size * 1.4f) +
-                 scroll + gap;
-    }
-
-    cursor = drawWrapped(
-                 canvas,
-                 settings_.use_ntp
-                     ? "Sync sets Home and World to UTC, preserving their city "
-                       "IDs, then writes fresh SNTP UTC time. This changes the "
-                       "watch, not the phone or host system clock. 0x09 itself "
-                       "has no readback."
-                     : "Sync writes device local time to the watch. The watch "
-                       "stores no readback for 0x09; verify its display.",
-                 x, cursor - scroll, layout.content_w, layout.small_size,
-                 col::dim, layout.small_size * 1.4f) +
-             scroll;
-    return cursor - top;
-}
-
 float WatchView::drawAlarmsPage(Canvas &canvas, const Layout &layout)
 {
     const float scroll = page_scroll(route_index(route_));
@@ -1531,6 +1300,7 @@ void WatchView::handleClick(float x, float y)
             case Action::TimerInitialize:
             case Action::TimerRevert:
             case Action::ClockUnit:
+            case Action::CloseDetail:
             case Action::CityTimezone:
             case Action::CityDstDiff:
             case Action::CityDstToggle:
@@ -1760,11 +1530,18 @@ void WatchView::handleClick(float x, float y)
             timer_confirm_ = false;
             break;
         case Action::ClockUnit:
-            if (!clock_dirty_ && it->arg >= 0 && it->arg < 5) {
-                clock_unit_ = it->arg;
-                edit_city_name_ = edit_city_names_[clock_unit_].name;
-                clock_confirm_ = false;
+            if ((!clock_dirty_ || it->arg == clock_unit_) && it->arg >= 0 &&
+                it->arg < 5) {
+                if (!clock_dirty_) {
+                    clock_unit_ = it->arg;
+                    edit_city_name_ = edit_city_names_[clock_unit_].name;
+                    clock_confirm_ = false;
+                }
+                open_detail(Detail::City, clock_unit_);
             }
+            break;
+        case Action::CloseDetail:
+            close_detail();
             break;
         case Action::CityTimezone:
             edit_dst_settings_[clock_unit_].timezone = static_cast<int8_t>(
@@ -2078,7 +1855,8 @@ void WatchView::drawFrame()
         page_height = drawWatchPage(canvas, layout);
         break;
     case Route::Time:
-        page_height = drawClockPage(canvas, layout);
+        page_height = detail_ == Detail::City ? drawCityEditor(canvas, layout)
+                                              : drawTimePage(canvas, layout);
         break;
     case Route::Alarms:
         page_height = drawAlarmsPage(canvas, layout);

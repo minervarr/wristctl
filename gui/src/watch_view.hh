@@ -83,6 +83,7 @@ private:
         TimerApply,
         TimerRevert,
         ClockUnit,
+        CloseDetail,
         CityTimezone,
         CityDstDiff,
         CityDstToggle,
@@ -153,7 +154,8 @@ private:
     float drawOverviewPage(Canvas &canvas, const Layout &layout);
     float drawWatchPage(Canvas &canvas, const Layout &layout);
     float drawPairPage(Canvas &canvas, const Layout &layout);
-    float drawClockPage(Canvas &canvas, const Layout &layout);
+    float drawTimePage(Canvas &canvas, const Layout &layout);
+    float drawCityEditor(Canvas &canvas, const Layout &layout);
     float drawAlarmsPage(Canvas &canvas, const Layout &layout);
     float drawTimerPage(Canvas &canvas, const Layout &layout);
     float drawNotifyPage(Canvas &canvas, const Layout &layout);
