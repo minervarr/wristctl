@@ -21,3 +21,6 @@ android/local.properties
 android/.idea/
 *.iml
 build-*/
+
+# Local worktrees
+.worktrees/
