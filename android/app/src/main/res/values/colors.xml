@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window the SYSTEM draws before the first Vulkan frame. The Vk_Canvas
+         background is pure black (see col::bg), so say so here rather than
+         letting the platform default flash. -->
+    <color name="wristctl_bg">#FF000000</color>
+</resources>

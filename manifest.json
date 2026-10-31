@@ -1,0 +1,10 @@
+{
+  "name": "wristctl",
+  "description": "Free-software replacement for the CASIO G-SHOCK MOVE watch-control stack",
+  "version": "0.1.0",
+  "platforms": ["linux", "android"],
+  "language": "C11/C++17",
+  "build": {
+    "linux": "scripts/build.sh"
+  }
+}

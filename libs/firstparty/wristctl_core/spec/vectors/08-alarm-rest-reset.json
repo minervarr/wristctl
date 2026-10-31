@@ -1,0 +1,46 @@
+{
+  "id": "alarm-rest-reset",
+  "class": "alarm_rest",
+  "source": "observed: reset GBX-100 2026-10-28",
+  "bytes": "1600000000000000000000000000000000",
+  "decoded": {
+    "alarms": [
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "constant": 0,
+        "hour": 0,
+        "minute": 0
+      },
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "constant": 0,
+        "hour": 0,
+        "minute": 0
+      },
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "constant": 0,
+        "hour": 0,
+        "minute": 0
+      },
+      {
+        "flag": 0,
+        "enabled": false,
+        "one_time": false,
+        "hourly_chime": false,
+        "constant": 0,
+        "hour": 0,
+        "minute": 0
+      }
+    ]
+  }
+}
