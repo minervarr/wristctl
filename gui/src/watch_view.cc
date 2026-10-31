@@ -721,103 +721,6 @@ void WatchView::drawTabs(Canvas &canvas, const Layout &layout)
     }
 }
 
-float WatchView::drawTimerPage(Canvas &canvas, const Layout &layout)
-{
-    const float scroll = page_scroll(route_index(route_));
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-    const float gap = 6 * d;
-    const float btn_h = touch_ ? 40 * d : 30.0f;
-    float cursor = top;
-
-    canvas.text("Program timer", x, cursor - scroll, layout.page_title_size,
-                col::text);
-    cursor += layout.page_title_size * 1.6f;
-
-    if (!snapshot_.has_timer) {
-        cursor = drawWrapped(canvas, "not read yet; connect and press Refresh",
-                             x, cursor - scroll, layout.content_w,
-                             layout.text_size, col::dim, layout.row_line) +
-                 scroll;
-        return cursor - top;
-    }
-
-    canvas.text("repeat", x, cursor - scroll, layout.text_size, col::dim);
-    char repeat[32];
-    std::snprintf(repeat, sizeof repeat, "%u", edit_timer_.repeat);
-    canvas.text(repeat, x + layout.label_w, cursor - scroll,
-                layout.text_size, col::text);
-    const float rw = 110 * d;
-    addButton(canvas, x + layout.content_w - rw * 2 - gap, cursor - scroll, rw,
-              btn_h, "-1", Action::TimerRepeat, 0, false, btn_h * 0.18f, -1);
-    addButton(canvas, x + layout.content_w - rw, cursor - scroll, rw, btn_h,
-              "+1", Action::TimerRepeat, 0, false, btn_h * 0.18f, 1);
-    cursor += btn_h + gap;
-
-    canvas.text("one round", x, cursor - scroll, layout.text_size, col::dim);
-    canvas.text(duration_text(timer_round_seconds(edit_timer_)),
-                x + layout.label_w, cursor - scroll, layout.text_size, col::text);
-    cursor += layout.row_line + gap;
-
-    static const char *const beep_names[] = {"Walk1", "Walk2", "Rush", "Rest"};
-    for (int index = 0; index < 6; index++) {
-        const wc_program_timer_workouts_item &item =
-            edit_timer_.workouts[index];
-        char label[32];
-        std::snprintf(label, sizeof label, "%d", index + 1);
-        canvas.text(label, x, cursor - scroll, layout.text_size, col::dim);
-        char time[32];
-        std::snprintf(time, sizeof time, "%02u:%02u", item.minutes,
-                      item.seconds);
-        canvas.text(time, x + 26 * d, cursor - scroll, layout.text_size,
-                    (item.minutes == 0 && item.seconds == 0) ? col::dim
-                                                             : col::text);
-        canvas.text(beep_names[item.beep & 3], x + 110 * d, cursor - scroll,
-                    layout.small_size, col::dim);
-        cursor += layout.row_line;
-
-        const int count = 5;
-        const float bw = (layout.content_w - gap * (count - 1)) / count;
-        float bx = x;
-        auto button = [&](const std::string &text, Action action, int arg,
-                          int arg2) {
-            addButton(canvas, bx, cursor - scroll, bw, btn_h, text, action, 0,
-                      false, btn_h * 0.18f, arg, arg2);
-            bx += bw + gap;
-        };
-        button("-1m", Action::TimerMinutes, index, -1);
-        button("+1m", Action::TimerMinutes, index, 1);
-        button("-5s", Action::TimerSeconds, index, -5);
-        button("+5s", Action::TimerSeconds, index, 5);
-        button("Sound", Action::TimerBeep, index, 1);
-        cursor += btn_h + gap;
-    }
-
-    cursor += 4 * d;
-    const float third = (layout.content_w - 2 * gap) / 3;
-    addButton(canvas, x, cursor - scroll, third, layout.action_h,
-              "Initialize", Action::TimerInitialize, 0, false,
-              layout.action_h * 0.2f);
-    addButton(canvas, x + third + gap, cursor - scroll, third, layout.action_h,
-              timer_confirm_ ? "Tap again to replace" : "Apply timer",
-              Action::TimerApply, 0, timer_dirty_, layout.action_h * 0.2f);
-    addButton(canvas, x + 2 * (third + gap), cursor - scroll, third,
-              layout.action_h, "Revert", Action::TimerRevert, 0, false,
-              layout.action_h * 0.2f);
-    cursor += layout.action_h + gap;
-    cursor = drawWrapped(
-                 canvas,
-                 "Apply replaces the whole program timer, including the repeat "
-                 "count and every workout. The watch normalises the sound "
-                 "byte; read it back before relying on a value other than "
-                 "Walk1.",
-                 x, cursor - scroll, layout.content_w, layout.small_size,
-                 col::dim, layout.small_size * 1.4f) +
-             scroll;
-    return cursor - top;
-}
-
 float WatchView::drawNotifyPage(Canvas &canvas, const Layout &layout)
 {
     const float scroll = page_scroll(route_index(route_));
@@ -1195,6 +1098,7 @@ void WatchView::handleClick(float x, float y)
             case Action::AlarmHour:
             case Action::AlarmMinute:
             case Action::AlarmRevert:
+            case Action::TimerEdit:
             case Action::TimerRepeat:
             case Action::TimerMinutes:
             case Action::TimerSeconds:
@@ -1397,6 +1301,11 @@ void WatchView::handleClick(float x, float y)
             }
             alarms_dirty_ = false;
             alarms_confirm_ = false;
+            break;
+        case Action::TimerEdit:
+            if (it->arg >= 0 && it->arg < 6) {
+                open_detail(Detail::TimerStep, it->arg);
+            }
             break;
         case Action::TimerRepeat:
             edit_timer_.repeat = static_cast<uint8_t>(std::clamp(
@@ -1770,7 +1679,9 @@ void WatchView::drawFrame()
                                                : drawAlarmsPage(canvas, layout);
         break;
     case Route::Timer:
-        page_height = drawTimerPage(canvas, layout);
+        page_height = detail_ == Detail::TimerStep
+            ? drawTimerStepEditor(canvas, layout)
+            : drawTimerPage(canvas, layout);
         break;
     case Route::Phone:
         page_height = drawNotifyPage(canvas, layout);

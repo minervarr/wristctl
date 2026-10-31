@@ -76,6 +76,7 @@ private:
         AlarmChime,
         AlarmApply,
         AlarmRevert,
+        TimerEdit,
         TimerRepeat,
         TimerMinutes,
         TimerSeconds,
@@ -160,6 +161,7 @@ private:
     float drawAlarmsPage(Canvas &canvas, const Layout &layout);
     float drawAlarmEditor(Canvas &canvas, const Layout &layout);
     float drawTimerPage(Canvas &canvas, const Layout &layout);
+    float drawTimerStepEditor(Canvas &canvas, const Layout &layout);
     float drawNotifyPage(Canvas &canvas, const Layout &layout);
     float drawSettingsPage(Canvas &canvas, const Layout &layout);
     float drawDiagnosticsPage(Canvas &canvas, const Layout &layout);

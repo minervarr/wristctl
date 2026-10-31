@@ -74,6 +74,7 @@ add_executable(wristctl_gui
     src/watch_view_utility.cc
     src/watch_view_time.cc
     src/watch_view_alarms.cc
+    src/watch_view_timer.cc
     src/demo_scenarios.cc
     src/ble_worker.cc
     src/bluez_link.cc
