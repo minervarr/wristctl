@@ -5,18 +5,22 @@ The wire protocol is described once in
 `libs/firstparty/wristctl_core/spec/`, and the Python and C codecs are
 generated from that description.
 
-Status: **protocol skeleton, C++ GUI, GTK prototype, Android probe app**. The
-C11 core is the product; `gui/` is the App_shell/Vk_Canvas desktop frontend and
-`android/` is the JNI probe app. The Python tree remains the reference
-implementation and the hardware harness. The C++ GUI and the GTK app have been
-exercised against the recorded session, not yet against a watch. The Android
-app has been installed and its JNI path verified on a phone; its BLE path has
-not been run against a watch yet.
+Status: **C11 protocol core, shared C++ desktop/Android GUI, GTK prototype**.
+The Python tree remains the reference implementation and hardware harness. The
+GUI covers watch status, clocks, alarms, timers, phone notifications and local
+settings; unsupported official-app services are reported as unavailable rather
+than simulated. Desktop pairing, state reads and a local-time write have been
+verified on a GBX-100. Android has also been exercised with that watch, but the
+newer SNTP, notification and phone-finder paths still need device validation.
+
+The app is offline-first: no Casio account, cloud sync, Play Store integration,
+analytics, telemetry or online coaching. Optional SNTP UDP time synchronization
+is the only intentional network access. Firmware update remains out of scope.
 
 ## What is validated
 
-`make test` regenerates every codec and runs the same 20 golden vectors through
-both implementations:
+`./scripts/build.sh test` (or `make test`) regenerates every codec and runs the
+same 22 golden vectors through both implementations:
 
 - 137 watch models, 37 protocol generations, 107 capability flags extracted
   from the vendor app's `CasioLibUtil.DeviceType` table
@@ -24,8 +28,11 @@ both implementations:
   proven on a GBX-100: time, basic settings, five alarms, program timer, watch
   name, watch condition, DST state/setting, city name, app info, service
   discovery and error frames
-- 4 CTest suites (vectors, models, session replay, C++ consumer) and 43 Python
-  tests, all passing
+- 5 core CTest suites (13 when the GUI and its tests are built), 43 Python tests
+  and 19 builder tests, all passing
+- C session pairing verified on a fresh GBX-100: time before `0x47 02`, SMP,
+  `0x47 01`, bonded reconnect and settings read; reset alarm/timer frames
+  captured and decoded
 
 The Android app (`android/`) compiles those same C sources into
 `libwristctl.so`, so the codecs under test are the codecs that ship.
@@ -49,7 +56,13 @@ gui/                     App_shell/Vk_Canvas desktop frontend (C++17)
 py/                      Python reference implementation (prototype) + GTK app
 android/                 single-activity app; links wristctl_core over JNI
 tools/                   capture decoder, vector authoring, hardware probe
+scripts/                 build tool (manifest-driven cmake/ninja wrapper)
+manifest.json            version and build entry used by scripts/build.sh
 ```
+
+Build output is one `build/` root with one directory per variant:
+`build/linux_debug`, `build/linux` (portable Release), `build/linux_native`
+(`-march=native`) and `build/linux_custom-<arch>[_debug]`.
 
 Generated files are `py/wristctl_proto/generated/*`,
 `libs/firstparty/wristctl_core/include/wristctl/{generated,models}.h`,
@@ -61,15 +74,23 @@ Edit the spec, not the generated files.
 ## Commands
 
 ```sh
-make test        # regenerate, configure Debug, build, ctest, then Python suites
+./scripts/build.sh                    # menu on a terminal; Debug otherwise
+./scripts/build.sh build --debug      # build/linux_debug (tests + GUI if available)
+./scripts/build.sh build --release    # build/linux (portable Release)
+./scripts/build.sh build --release --arch native   # build/linux_native
+./scripts/build.sh test               # regenerate + Debug + CTest + Python suites
+./scripts/build.sh build --dry-run    # print the cmake commands, run nothing
+./scripts/build.sh --version
+
+make test        # same as ./scripts/build.sh test
+make test-tool   # the builder's own 19 unit tests (no toolchain)
+make build       # ./scripts/build.sh build --debug
 make generate    # regenerate only
-make configure   # cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-make build       # configure + ninja
 python3 tools/decode_capture.py   # coverage report against the recorded handshake
 python3 tools/make_vectors.py     # rewrite the core's spec/vectors from the authored list
 
-make gui         # configure build-gui with WRISTCTL_BUILD_GUI=ON and run the demo
-make gui-live    # same, then scan immediately (--connect)
+make gui         # build/linux_debug with the GUI, then run it (auto-connect)
+make gui-live    # same, then force an immediate scan (--connect)
 make ui-demo     # GTK prototype against the recorded session
 make ui          # GTK prototype against a real watch
 
@@ -77,6 +98,13 @@ make android          # build app/build/outputs/apk/debug/app-debug.apk
 make android-install  # build, then adb install
 make android-lint     # lintDebug
 ```
+
+The builder probes for the GUI's prerequisites (`slangc`, `glslc`, the
+Wayland/xkb development files and the submodule checkouts) and enables
+`WRISTCTL_BUILD_GUI` by itself when they are present; `--gui`/`--no-gui`
+override that. Debug builds include the tests; Release builds do not. The
+binary is `build/linux_debug/platform/linux/wristctl_cli` and the GUI is
+`build/linux_debug/gui/wristctl_gui`.
 
 The GUI needs a Vulkan SDK (`vulkaninfo`, `glslc`, `slangc`) and the
 Wayland/xkb development packages. The framework libraries are submodules:
@@ -103,13 +131,33 @@ binary):
 
 ```sh
 git submodule update --init --recursive
-make gui          # build-gui with WRISTCTL_BUILD_GUI=ON; demo session
-make gui-live     # same, then scan immediately
+./scripts/build.sh build --debug --gui   # -> build/linux_debug/gui/wristctl_gui
+./build/linux_debug/gui/wristctl_gui
+make gui          # the same build, then run it
+make gui-live     # same, then force an immediate scan
 ```
 
-The worker thread owns BlueZ and the C session, so the window never blocks on
-D-Bus. `gui/README.md` lists what each page can write; alarms and the program
-timer are read-only in this build, and notifications are not wired yet.
+The GUI connects automatically on launch. It scans in 10-second windows and
+retries with a 2-15-second backoff; `--no-connect` starts on the recorded demo
+instead, and `Disconnect`/`C` turn auto-connect off and on. A dropped link is
+detected through BlueZ and reconnected without user action. Closing the window
+cancels an in-flight scan. Details are in `gui/README.md`.
+
+**Sync time** uses device-local time or SNTP UTC. Pass `--timezone Etc/GMT+5`
+(or set `WRISTCTL_TIMEZONE`) for local mode when the host zone differs from the
+watch's. SNTP uses the Linux host's configured pool by default, runs identically
+in the shared Android worker, and never changes the phone's system clock.
+
+The worker thread owns the platform link and C session, so the window never
+blocks on D-Bus or JNI. Five primary destinations cover Overview, Time, Alarms,
+Timer and Phone, with Watch, Settings and Diagnostics in the utility area.
+Desktop uses a slim navigation rail; Android uses bottom navigation. Supported
+editors include alarms, the program timer, five cities/DST entries, basic
+settings, watch name and app notifications. Overview card visibility now lives
+in Settings, while raw frames, flags, logs and SNTP details live in Diagnostics.
+Android adds opt-in, locally filtered notification forwarding and phone finder;
+`gui/README.md` and `android/README.md` describe the readback, privacy and
+validation rules. Newer writes still require hardware validation.
 
 ![C++ GUI on the recorded demo session](docs/gui-watch.png)
 
@@ -166,8 +214,9 @@ container), `bytes`, `string` (UTF-8, NUL-padded) and `array` (fixed count and
 stride, item fields relative to the item).
 
 A field with `"expected": N` is a constant: it is checked on decode, written on
-encode, and omitted from both structs. That is how fixed bytes such as the
-alarm `0x40` separator stay correct without every caller setting them.
+encode, and omitted from both structs. Alarm separator bytes are deliberately
+not fixed constants: the reset GBX-100 returns zero, so they remain ordinary
+fields whose read values survive a write.
 
 Bit fields do not replace their container: the container byte is preserved and
 the bits are applied on top, so unknown bits survive a read-modify-write.
@@ -188,12 +237,16 @@ the bits are applied on top, so unknown bits survive a read-modify-write.
 
 ## Next
 
-1. Run the Android app against the watch: connect, handshake, `Sync time`, and
-   compare the watch display. This is the only unverified path left in the app.
-2. C session state machine plus a transport interface, so Android and Linux
-   share the handshake instead of each reimplementing it in its host language.
-3. Add the remaining observed classes (`0x10`, `0x11`, `0x20`, `0x26`, `0x45`,
-   `0x3D`) once their field layouts are pinned down, then the convoy channel.
+1. Validate SNTP/UTC provisioning, notification delivery and phone finder on a
+   physical Android phone and watch; builds and packet tests do not prove those
+   device interactions.
+2. Establish the complete activity/convoy download protocol before storing or
+   displaying real activity history.
+3. Establish run-measurement and GPS/radio-location framing before enabling
+   those writes. The current UI leaves all three unavailable rather than sending
+   placeholders or presenting fabricated data.
+4. Add other remaining observed classes only after their field layouts are
+   pinned down by captures or decompiled evidence.
 
 Firmware update is deliberately out of scope: it needs vendor binaries and is
 the only path that can brick a watch.

@@ -147,6 +147,7 @@ static int vec_04_decode(void)
     VEC_CHECK(v.enabled == 1, "alarm-first-enabled", "enabled");
     VEC_CHECK(v.one_time == 0, "alarm-first-enabled", "one_time");
     VEC_CHECK(v.hourly_chime == 0, "alarm-first-enabled", "hourly_chime");
+    VEC_CHECK(v.constant == 64, "alarm-first-enabled", "constant");
     VEC_CHECK(v.hour == 7, "alarm-first-enabled", "hour");
     VEC_CHECK(v.minute == 30, "alarm-first-enabled", "minute");
     return 0;
@@ -160,6 +161,7 @@ static int vec_04_encode(void)
     v.enabled = 1;
     v.one_time = 0;
     v.hourly_chime = 0;
+    v.constant = 64;
     v.hour = 7;
     v.minute = 30;
     uint8_t out[256];
@@ -183,24 +185,28 @@ static int vec_05_decode(void)
     VEC_CHECK(v.alarms[0].enabled == 0, "alarm-rest-all-off", "enabled");
     VEC_CHECK(v.alarms[0].one_time == 0, "alarm-rest-all-off", "one_time");
     VEC_CHECK(v.alarms[0].hourly_chime == 0, "alarm-rest-all-off", "hourly_chime");
+    VEC_CHECK(v.alarms[0].constant == 64, "alarm-rest-all-off", "constant");
     VEC_CHECK(v.alarms[0].hour == 0, "alarm-rest-all-off", "hour");
     VEC_CHECK(v.alarms[0].minute == 0, "alarm-rest-all-off", "minute");
     VEC_CHECK(v.alarms[1].flag == 0, "alarm-rest-all-off", "flag");
     VEC_CHECK(v.alarms[1].enabled == 0, "alarm-rest-all-off", "enabled");
     VEC_CHECK(v.alarms[1].one_time == 0, "alarm-rest-all-off", "one_time");
     VEC_CHECK(v.alarms[1].hourly_chime == 0, "alarm-rest-all-off", "hourly_chime");
+    VEC_CHECK(v.alarms[1].constant == 64, "alarm-rest-all-off", "constant");
     VEC_CHECK(v.alarms[1].hour == 0, "alarm-rest-all-off", "hour");
     VEC_CHECK(v.alarms[1].minute == 0, "alarm-rest-all-off", "minute");
     VEC_CHECK(v.alarms[2].flag == 0, "alarm-rest-all-off", "flag");
     VEC_CHECK(v.alarms[2].enabled == 0, "alarm-rest-all-off", "enabled");
     VEC_CHECK(v.alarms[2].one_time == 0, "alarm-rest-all-off", "one_time");
     VEC_CHECK(v.alarms[2].hourly_chime == 0, "alarm-rest-all-off", "hourly_chime");
+    VEC_CHECK(v.alarms[2].constant == 64, "alarm-rest-all-off", "constant");
     VEC_CHECK(v.alarms[2].hour == 0, "alarm-rest-all-off", "hour");
     VEC_CHECK(v.alarms[2].minute == 0, "alarm-rest-all-off", "minute");
     VEC_CHECK(v.alarms[3].flag == 0, "alarm-rest-all-off", "flag");
     VEC_CHECK(v.alarms[3].enabled == 0, "alarm-rest-all-off", "enabled");
     VEC_CHECK(v.alarms[3].one_time == 0, "alarm-rest-all-off", "one_time");
     VEC_CHECK(v.alarms[3].hourly_chime == 0, "alarm-rest-all-off", "hourly_chime");
+    VEC_CHECK(v.alarms[3].constant == 64, "alarm-rest-all-off", "constant");
     VEC_CHECK(v.alarms[3].hour == 0, "alarm-rest-all-off", "hour");
     VEC_CHECK(v.alarms[3].minute == 0, "alarm-rest-all-off", "minute");
     return 0;
@@ -214,24 +220,28 @@ static int vec_05_encode(void)
     v.alarms[0].enabled = 0;
     v.alarms[0].one_time = 0;
     v.alarms[0].hourly_chime = 0;
+    v.alarms[0].constant = 64;
     v.alarms[0].hour = 0;
     v.alarms[0].minute = 0;
     v.alarms[1].flag = 0;
     v.alarms[1].enabled = 0;
     v.alarms[1].one_time = 0;
     v.alarms[1].hourly_chime = 0;
+    v.alarms[1].constant = 64;
     v.alarms[1].hour = 0;
     v.alarms[1].minute = 0;
     v.alarms[2].flag = 0;
     v.alarms[2].enabled = 0;
     v.alarms[2].one_time = 0;
     v.alarms[2].hourly_chime = 0;
+    v.alarms[2].constant = 64;
     v.alarms[2].hour = 0;
     v.alarms[2].minute = 0;
     v.alarms[3].flag = 0;
     v.alarms[3].enabled = 0;
     v.alarms[3].one_time = 0;
     v.alarms[3].hourly_chime = 0;
+    v.alarms[3].constant = 64;
     v.alarms[3].hour = 0;
     v.alarms[3].minute = 0;
     uint8_t out[256];
@@ -255,24 +265,28 @@ static int vec_06_decode(void)
     VEC_CHECK(v.alarms[0].enabled == 0, "alarm-rest-one-enabled", "enabled");
     VEC_CHECK(v.alarms[0].one_time == 0, "alarm-rest-one-enabled", "one_time");
     VEC_CHECK(v.alarms[0].hourly_chime == 0, "alarm-rest-one-enabled", "hourly_chime");
+    VEC_CHECK(v.alarms[0].constant == 64, "alarm-rest-one-enabled", "constant");
     VEC_CHECK(v.alarms[0].hour == 0, "alarm-rest-one-enabled", "hour");
     VEC_CHECK(v.alarms[0].minute == 0, "alarm-rest-one-enabled", "minute");
     VEC_CHECK(v.alarms[1].flag == 64, "alarm-rest-one-enabled", "flag");
     VEC_CHECK(v.alarms[1].enabled == 1, "alarm-rest-one-enabled", "enabled");
     VEC_CHECK(v.alarms[1].one_time == 0, "alarm-rest-one-enabled", "one_time");
     VEC_CHECK(v.alarms[1].hourly_chime == 0, "alarm-rest-one-enabled", "hourly_chime");
+    VEC_CHECK(v.alarms[1].constant == 64, "alarm-rest-one-enabled", "constant");
     VEC_CHECK(v.alarms[1].hour == 6, "alarm-rest-one-enabled", "hour");
     VEC_CHECK(v.alarms[1].minute == 15, "alarm-rest-one-enabled", "minute");
     VEC_CHECK(v.alarms[2].flag == 0, "alarm-rest-one-enabled", "flag");
     VEC_CHECK(v.alarms[2].enabled == 0, "alarm-rest-one-enabled", "enabled");
     VEC_CHECK(v.alarms[2].one_time == 0, "alarm-rest-one-enabled", "one_time");
     VEC_CHECK(v.alarms[2].hourly_chime == 0, "alarm-rest-one-enabled", "hourly_chime");
+    VEC_CHECK(v.alarms[2].constant == 64, "alarm-rest-one-enabled", "constant");
     VEC_CHECK(v.alarms[2].hour == 0, "alarm-rest-one-enabled", "hour");
     VEC_CHECK(v.alarms[2].minute == 0, "alarm-rest-one-enabled", "minute");
     VEC_CHECK(v.alarms[3].flag == 0, "alarm-rest-one-enabled", "flag");
     VEC_CHECK(v.alarms[3].enabled == 0, "alarm-rest-one-enabled", "enabled");
     VEC_CHECK(v.alarms[3].one_time == 0, "alarm-rest-one-enabled", "one_time");
     VEC_CHECK(v.alarms[3].hourly_chime == 0, "alarm-rest-one-enabled", "hourly_chime");
+    VEC_CHECK(v.alarms[3].constant == 64, "alarm-rest-one-enabled", "constant");
     VEC_CHECK(v.alarms[3].hour == 0, "alarm-rest-one-enabled", "hour");
     VEC_CHECK(v.alarms[3].minute == 0, "alarm-rest-one-enabled", "minute");
     return 0;
@@ -286,24 +300,28 @@ static int vec_06_encode(void)
     v.alarms[0].enabled = 0;
     v.alarms[0].one_time = 0;
     v.alarms[0].hourly_chime = 0;
+    v.alarms[0].constant = 64;
     v.alarms[0].hour = 0;
     v.alarms[0].minute = 0;
     v.alarms[1].flag = 64;
     v.alarms[1].enabled = 1;
     v.alarms[1].one_time = 0;
     v.alarms[1].hourly_chime = 0;
+    v.alarms[1].constant = 64;
     v.alarms[1].hour = 6;
     v.alarms[1].minute = 15;
     v.alarms[2].flag = 0;
     v.alarms[2].enabled = 0;
     v.alarms[2].one_time = 0;
     v.alarms[2].hourly_chime = 0;
+    v.alarms[2].constant = 64;
     v.alarms[2].hour = 0;
     v.alarms[2].minute = 0;
     v.alarms[3].flag = 0;
     v.alarms[3].enabled = 0;
     v.alarms[3].one_time = 0;
     v.alarms[3].hourly_chime = 0;
+    v.alarms[3].constant = 64;
     v.alarms[3].hour = 0;
     v.alarms[3].minute = 0;
     uint8_t out[256];
@@ -315,19 +333,57 @@ static int vec_06_encode(void)
     return 0;
 }
 
-/* watch-name-capture: observed: work/evidence/att_frames_current.txt:3 */
-static const uint8_t vec_07_bytes[] = {0x23, 0x43, 0x41, 0x53, 0x49, 0x4f, 0x20, 0x47, 0x42, 0x58, 0x2d, 0x31, 0x30, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+/* alarm-first-disabled: observed: reset GBX-100 2026-10-28 */
+static const uint8_t vec_07_bytes[] = {0x15, 0x00, 0x00, 0x00, 0x00};
 
 static int vec_07_decode(void)
 {
+    wc_alarm_first v;
+    int rc = wc_alarm_first_decode(vec_07_bytes, sizeof vec_07_bytes, &v);
+    VEC_CHECK(rc == WC_OK, "alarm-first-disabled", "decode");
+    VEC_CHECK(v.flag == 0, "alarm-first-disabled", "flag");
+    VEC_CHECK(v.enabled == 0, "alarm-first-disabled", "enabled");
+    VEC_CHECK(v.one_time == 0, "alarm-first-disabled", "one_time");
+    VEC_CHECK(v.hourly_chime == 0, "alarm-first-disabled", "hourly_chime");
+    VEC_CHECK(v.constant == 0, "alarm-first-disabled", "constant");
+    VEC_CHECK(v.hour == 0, "alarm-first-disabled", "hour");
+    VEC_CHECK(v.minute == 0, "alarm-first-disabled", "minute");
+    return 0;
+}
+
+static int vec_07_encode(void)
+{
+    wc_alarm_first v;
+    memset(&v, 0, sizeof v);
+    v.flag = 0;
+    v.enabled = 0;
+    v.one_time = 0;
+    v.hourly_chime = 0;
+    v.constant = 0;
+    v.hour = 0;
+    v.minute = 0;
+    uint8_t out[256];
+    size_t n = 0;
+    int rc = wc_alarm_first_encode(&v, out, sizeof out, &n);
+    VEC_CHECK(rc == WC_OK, "alarm-first-disabled", "encode");
+    VEC_CHECK(n == sizeof vec_07_bytes, "alarm-first-disabled", "encoded length");
+    VEC_CHECK(memcmp(out, vec_07_bytes, n) == 0, "alarm-first-disabled", "encoded bytes");
+    return 0;
+}
+
+/* watch-name-capture: observed: work/evidence/att_frames_current.txt:3 */
+static const uint8_t vec_08_bytes[] = {0x23, 0x43, 0x41, 0x53, 0x49, 0x4f, 0x20, 0x47, 0x42, 0x58, 0x2d, 0x31, 0x30, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+static int vec_08_decode(void)
+{
     wc_watch_name v;
-    int rc = wc_watch_name_decode(vec_07_bytes, sizeof vec_07_bytes, &v);
+    int rc = wc_watch_name_decode(vec_08_bytes, sizeof vec_08_bytes, &v);
     VEC_CHECK(rc == WC_OK, "watch-name-capture", "decode");
     VEC_CHECK(strcmp(v.name, "CASIO GBX-100") == 0, "watch-name-capture", "name");
     return 0;
 }
 
-static int vec_07_encode(void)
+static int vec_08_encode(void)
 {
     wc_watch_name v;
     memset(&v, 0, sizeof v);
@@ -336,18 +392,98 @@ static int vec_07_encode(void)
     size_t n = 0;
     int rc = wc_watch_name_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "watch-name-capture", "encode");
-    VEC_CHECK(n == sizeof vec_07_bytes, "watch-name-capture", "encoded length");
-    VEC_CHECK(memcmp(out, vec_07_bytes, n) == 0, "watch-name-capture", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_08_bytes, "watch-name-capture", "encoded length");
+    VEC_CHECK(memcmp(out, vec_08_bytes, n) == 0, "watch-name-capture", "encoded bytes");
+    return 0;
+}
+
+/* alarm-rest-reset: observed: reset GBX-100 2026-10-28 */
+static const uint8_t vec_09_bytes[] = {0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+static int vec_09_decode(void)
+{
+    wc_alarm_rest v;
+    int rc = wc_alarm_rest_decode(vec_09_bytes, sizeof vec_09_bytes, &v);
+    VEC_CHECK(rc == WC_OK, "alarm-rest-reset", "decode");
+    VEC_CHECK(v.alarms[0].flag == 0, "alarm-rest-reset", "flag");
+    VEC_CHECK(v.alarms[0].enabled == 0, "alarm-rest-reset", "enabled");
+    VEC_CHECK(v.alarms[0].one_time == 0, "alarm-rest-reset", "one_time");
+    VEC_CHECK(v.alarms[0].hourly_chime == 0, "alarm-rest-reset", "hourly_chime");
+    VEC_CHECK(v.alarms[0].constant == 0, "alarm-rest-reset", "constant");
+    VEC_CHECK(v.alarms[0].hour == 0, "alarm-rest-reset", "hour");
+    VEC_CHECK(v.alarms[0].minute == 0, "alarm-rest-reset", "minute");
+    VEC_CHECK(v.alarms[1].flag == 0, "alarm-rest-reset", "flag");
+    VEC_CHECK(v.alarms[1].enabled == 0, "alarm-rest-reset", "enabled");
+    VEC_CHECK(v.alarms[1].one_time == 0, "alarm-rest-reset", "one_time");
+    VEC_CHECK(v.alarms[1].hourly_chime == 0, "alarm-rest-reset", "hourly_chime");
+    VEC_CHECK(v.alarms[1].constant == 0, "alarm-rest-reset", "constant");
+    VEC_CHECK(v.alarms[1].hour == 0, "alarm-rest-reset", "hour");
+    VEC_CHECK(v.alarms[1].minute == 0, "alarm-rest-reset", "minute");
+    VEC_CHECK(v.alarms[2].flag == 0, "alarm-rest-reset", "flag");
+    VEC_CHECK(v.alarms[2].enabled == 0, "alarm-rest-reset", "enabled");
+    VEC_CHECK(v.alarms[2].one_time == 0, "alarm-rest-reset", "one_time");
+    VEC_CHECK(v.alarms[2].hourly_chime == 0, "alarm-rest-reset", "hourly_chime");
+    VEC_CHECK(v.alarms[2].constant == 0, "alarm-rest-reset", "constant");
+    VEC_CHECK(v.alarms[2].hour == 0, "alarm-rest-reset", "hour");
+    VEC_CHECK(v.alarms[2].minute == 0, "alarm-rest-reset", "minute");
+    VEC_CHECK(v.alarms[3].flag == 0, "alarm-rest-reset", "flag");
+    VEC_CHECK(v.alarms[3].enabled == 0, "alarm-rest-reset", "enabled");
+    VEC_CHECK(v.alarms[3].one_time == 0, "alarm-rest-reset", "one_time");
+    VEC_CHECK(v.alarms[3].hourly_chime == 0, "alarm-rest-reset", "hourly_chime");
+    VEC_CHECK(v.alarms[3].constant == 0, "alarm-rest-reset", "constant");
+    VEC_CHECK(v.alarms[3].hour == 0, "alarm-rest-reset", "hour");
+    VEC_CHECK(v.alarms[3].minute == 0, "alarm-rest-reset", "minute");
+    return 0;
+}
+
+static int vec_09_encode(void)
+{
+    wc_alarm_rest v;
+    memset(&v, 0, sizeof v);
+    v.alarms[0].flag = 0;
+    v.alarms[0].enabled = 0;
+    v.alarms[0].one_time = 0;
+    v.alarms[0].hourly_chime = 0;
+    v.alarms[0].constant = 0;
+    v.alarms[0].hour = 0;
+    v.alarms[0].minute = 0;
+    v.alarms[1].flag = 0;
+    v.alarms[1].enabled = 0;
+    v.alarms[1].one_time = 0;
+    v.alarms[1].hourly_chime = 0;
+    v.alarms[1].constant = 0;
+    v.alarms[1].hour = 0;
+    v.alarms[1].minute = 0;
+    v.alarms[2].flag = 0;
+    v.alarms[2].enabled = 0;
+    v.alarms[2].one_time = 0;
+    v.alarms[2].hourly_chime = 0;
+    v.alarms[2].constant = 0;
+    v.alarms[2].hour = 0;
+    v.alarms[2].minute = 0;
+    v.alarms[3].flag = 0;
+    v.alarms[3].enabled = 0;
+    v.alarms[3].one_time = 0;
+    v.alarms[3].hourly_chime = 0;
+    v.alarms[3].constant = 0;
+    v.alarms[3].hour = 0;
+    v.alarms[3].minute = 0;
+    uint8_t out[256];
+    size_t n = 0;
+    int rc = wc_alarm_rest_encode(&v, out, sizeof out, &n);
+    VEC_CHECK(rc == WC_OK, "alarm-rest-reset", "encode");
+    VEC_CHECK(n == sizeof vec_09_bytes, "alarm-rest-reset", "encoded length");
+    VEC_CHECK(memcmp(out, vec_09_bytes, n) == 0, "alarm-rest-reset", "encoded bytes");
     return 0;
 }
 
 /* watch-condition-capture: observed: work/evidence/att_frames_current.txt:20 */
-static const uint8_t vec_08_bytes[] = {0x28, 0x06, 0x1e, 0x23, 0x00, 0xba, 0x01, 0x00, 0x01};
+static const uint8_t vec_10_bytes[] = {0x28, 0x06, 0x1e, 0x23, 0x00, 0xba, 0x01, 0x00, 0x01};
 
-static int vec_08_decode(void)
+static int vec_10_decode(void)
 {
     wc_watch_condition v;
-    int rc = wc_watch_condition_decode(vec_08_bytes, sizeof vec_08_bytes, &v);
+    int rc = wc_watch_condition_decode(vec_10_bytes, sizeof vec_10_bytes, &v);
     VEC_CHECK(rc == WC_OK, "watch-condition-capture", "decode");
     VEC_CHECK(v.battery == 6, "watch-condition-capture", "battery");
     VEC_CHECK(v.temperature == 30, "watch-condition-capture", "temperature");
@@ -362,7 +498,7 @@ static int vec_08_decode(void)
     return 0;
 }
 
-static int vec_08_encode(void)
+static int vec_10_encode(void)
 {
     wc_watch_condition v;
     memset(&v, 0, sizeof v);
@@ -380,18 +516,18 @@ static int vec_08_encode(void)
     size_t n = 0;
     int rc = wc_watch_condition_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "watch-condition-capture", "encode");
-    VEC_CHECK(n == sizeof vec_08_bytes, "watch-condition-capture", "encoded length");
-    VEC_CHECK(memcmp(out, vec_08_bytes, n) == 0, "watch-condition-capture", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_10_bytes, "watch-condition-capture", "encoded length");
+    VEC_CHECK(memcmp(out, vec_10_bytes, n) == 0, "watch-condition-capture", "encoded bytes");
     return 0;
 }
 
 /* program-timer-original: observed: work/MANIFEST.md restored watch state, repeat=1, 00:25 and 00:05 */
-static const uint8_t vec_09_bytes[] = {0x2a, 0x01, 0x00, 0x25, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t vec_11_bytes[] = {0x2a, 0x01, 0x00, 0x25, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-static int vec_09_decode(void)
+static int vec_11_decode(void)
 {
     wc_program_timer v;
-    int rc = wc_program_timer_decode(vec_09_bytes, sizeof vec_09_bytes, &v);
+    int rc = wc_program_timer_decode(vec_11_bytes, sizeof vec_11_bytes, &v);
     VEC_CHECK(rc == WC_OK, "program-timer-original", "decode");
     VEC_CHECK(v.repeat == 1, "program-timer-original", "repeat");
     VEC_CHECK(v.workouts[0].minutes == 0, "program-timer-original", "minutes");
@@ -415,7 +551,7 @@ static int vec_09_decode(void)
     return 0;
 }
 
-static int vec_09_encode(void)
+static int vec_11_encode(void)
 {
     wc_program_timer v;
     memset(&v, 0, sizeof v);
@@ -442,18 +578,18 @@ static int vec_09_encode(void)
     size_t n = 0;
     int rc = wc_program_timer_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "program-timer-original", "encode");
-    VEC_CHECK(n == sizeof vec_09_bytes, "program-timer-original", "encoded length");
-    VEC_CHECK(memcmp(out, vec_09_bytes, n) == 0, "program-timer-original", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_11_bytes, "program-timer-original", "encoded length");
+    VEC_CHECK(memcmp(out, vec_11_bytes, n) == 0, "program-timer-original", "encoded bytes");
     return 0;
 }
 
 /* program-timer-single: derived: single 05:00 entry with repeat=0, the shape gshockctl timer-set writes */
-static const uint8_t vec_10_bytes[] = {0x2a, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t vec_12_bytes[] = {0x2a, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-static int vec_10_decode(void)
+static int vec_12_decode(void)
 {
     wc_program_timer v;
-    int rc = wc_program_timer_decode(vec_10_bytes, sizeof vec_10_bytes, &v);
+    int rc = wc_program_timer_decode(vec_12_bytes, sizeof vec_12_bytes, &v);
     VEC_CHECK(rc == WC_OK, "program-timer-single", "decode");
     VEC_CHECK(v.repeat == 0, "program-timer-single", "repeat");
     VEC_CHECK(v.workouts[0].minutes == 5, "program-timer-single", "minutes");
@@ -477,7 +613,7 @@ static int vec_10_decode(void)
     return 0;
 }
 
-static int vec_10_encode(void)
+static int vec_12_encode(void)
 {
     wc_program_timer v;
     memset(&v, 0, sizeof v);
@@ -504,18 +640,18 @@ static int vec_10_encode(void)
     size_t n = 0;
     int rc = wc_program_timer_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "program-timer-single", "encode");
-    VEC_CHECK(n == sizeof vec_10_bytes, "program-timer-single", "encoded length");
-    VEC_CHECK(memcmp(out, vec_10_bytes, n) == 0, "program-timer-single", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_12_bytes, "program-timer-single", "encoded length");
+    VEC_CHECK(memcmp(out, vec_12_bytes, n) == 0, "program-timer-single", "encoded bytes");
     return 0;
 }
 
 /* dst-watch-state-capture: observed: work/evidence/att_frames_current.txt:38 */
-static const uint8_t vec_11_bytes[] = {0x1d, 0x00, 0x01, 0x02, 0x02, 0xb5, 0x76, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+static const uint8_t vec_13_bytes[] = {0x1d, 0x00, 0x01, 0x02, 0x02, 0xb5, 0x76, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-static int vec_11_decode(void)
+static int vec_13_decode(void)
 {
     wc_dst_watch_state v;
-    int rc = wc_dst_watch_state_decode(vec_11_bytes, sizeof vec_11_bytes, &v);
+    int rc = wc_dst_watch_state_decode(vec_13_bytes, sizeof vec_13_bytes, &v);
     VEC_CHECK(rc == WC_OK, "dst-watch-state-capture", "decode");
     VEC_CHECK(v.watch_no_home == 0, "dst-watch-state-capture", "watch_no_home");
     VEC_CHECK(v.watch_no_world == 1, "dst-watch-state-capture", "watch_no_world");
@@ -535,7 +671,7 @@ static int vec_11_decode(void)
     return 0;
 }
 
-static int vec_11_encode(void)
+static int vec_13_encode(void)
 {
     wc_dst_watch_state v;
     memset(&v, 0, sizeof v);
@@ -558,18 +694,18 @@ static int vec_11_encode(void)
     size_t n = 0;
     int rc = wc_dst_watch_state_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "dst-watch-state-capture", "encode");
-    VEC_CHECK(n == sizeof vec_11_bytes, "dst-watch-state-capture", "encoded length");
-    VEC_CHECK(memcmp(out, vec_11_bytes, n) == 0, "dst-watch-state-capture", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_13_bytes, "dst-watch-state-capture", "encoded length");
+    VEC_CHECK(memcmp(out, vec_13_bytes, n) == 0, "dst-watch-state-capture", "encoded bytes");
     return 0;
 }
 
 /* dst-setting-ht: observed: work/evidence/att_frames_current.txt:44 (home city, UTC-5, DST +60) */
-static const uint8_t vec_12_bytes[] = {0x1e, 0x00, 0xb5, 0x76, 0xec, 0x04, 0x00};
+static const uint8_t vec_14_bytes[] = {0x1e, 0x00, 0xb5, 0x76, 0xec, 0x04, 0x00};
 
-static int vec_12_decode(void)
+static int vec_14_decode(void)
 {
     wc_dst_setting v;
-    int rc = wc_dst_setting_decode(vec_12_bytes, sizeof vec_12_bytes, &v);
+    int rc = wc_dst_setting_decode(vec_14_bytes, sizeof vec_14_bytes, &v);
     VEC_CHECK(rc == WC_OK, "dst-setting-ht", "decode");
     VEC_CHECK(v.unit == 0, "dst-setting-ht", "unit");
     VEC_CHECK(v.city == 30389, "dst-setting-ht", "city");
@@ -579,7 +715,7 @@ static int vec_12_decode(void)
     return 0;
 }
 
-static int vec_12_encode(void)
+static int vec_14_encode(void)
 {
     wc_dst_setting v;
     memset(&v, 0, sizeof v);
@@ -592,18 +728,18 @@ static int vec_12_encode(void)
     size_t n = 0;
     int rc = wc_dst_setting_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "dst-setting-ht", "encode");
-    VEC_CHECK(n == sizeof vec_12_bytes, "dst-setting-ht", "encoded length");
-    VEC_CHECK(memcmp(out, vec_12_bytes, n) == 0, "dst-setting-ht", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_14_bytes, "dst-setting-ht", "encoded length");
+    VEC_CHECK(memcmp(out, vec_14_bytes, n) == 0, "dst-setting-ht", "encoded bytes");
     return 0;
 }
 
 /* dst-setting-wt: observed: work/evidence/att_frames_current.txt:45 (world-time unit cleared) */
-static const uint8_t vec_13_bytes[] = {0x1e, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t vec_15_bytes[] = {0x1e, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-static int vec_13_decode(void)
+static int vec_15_decode(void)
 {
     wc_dst_setting v;
-    int rc = wc_dst_setting_decode(vec_13_bytes, sizeof vec_13_bytes, &v);
+    int rc = wc_dst_setting_decode(vec_15_bytes, sizeof vec_15_bytes, &v);
     VEC_CHECK(rc == WC_OK, "dst-setting-wt", "decode");
     VEC_CHECK(v.unit == 1, "dst-setting-wt", "unit");
     VEC_CHECK(v.city == 0, "dst-setting-wt", "city");
@@ -613,7 +749,7 @@ static int vec_13_decode(void)
     return 0;
 }
 
-static int vec_13_encode(void)
+static int vec_15_encode(void)
 {
     wc_dst_setting v;
     memset(&v, 0, sizeof v);
@@ -626,25 +762,25 @@ static int vec_13_encode(void)
     size_t n = 0;
     int rc = wc_dst_setting_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "dst-setting-wt", "encode");
-    VEC_CHECK(n == sizeof vec_13_bytes, "dst-setting-wt", "encoded length");
-    VEC_CHECK(memcmp(out, vec_13_bytes, n) == 0, "dst-setting-wt", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_15_bytes, "dst-setting-wt", "encoded length");
+    VEC_CHECK(memcmp(out, vec_15_bytes, n) == 0, "dst-setting-wt", "encoded bytes");
     return 0;
 }
 
 /* city-name-read: observed: work/evidence/att_frames_current.txt:49 */
-static const uint8_t vec_14_bytes[] = {0x1f, 0x00, 0x54, 0x4f, 0x4b, 0x59, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t vec_16_bytes[] = {0x1f, 0x00, 0x54, 0x4f, 0x4b, 0x59, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-static int vec_14_decode(void)
+static int vec_16_decode(void)
 {
     wc_city_name v;
-    int rc = wc_city_name_decode(vec_14_bytes, sizeof vec_14_bytes, &v);
+    int rc = wc_city_name_decode(vec_16_bytes, sizeof vec_16_bytes, &v);
     VEC_CHECK(rc == WC_OK, "city-name-read", "decode");
     VEC_CHECK(v.unit == 0, "city-name-read", "unit");
     VEC_CHECK(strcmp(v.name, "TOKYO") == 0, "city-name-read", "name");
     return 0;
 }
 
-static int vec_14_encode(void)
+static int vec_16_encode(void)
 {
     wc_city_name v;
     memset(&v, 0, sizeof v);
@@ -654,25 +790,25 @@ static int vec_14_encode(void)
     size_t n = 0;
     int rc = wc_city_name_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "city-name-read", "encode");
-    VEC_CHECK(n == sizeof vec_14_bytes, "city-name-read", "encoded length");
-    VEC_CHECK(memcmp(out, vec_14_bytes, n) == 0, "city-name-read", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_16_bytes, "city-name-read", "encoded length");
+    VEC_CHECK(memcmp(out, vec_16_bytes, n) == 0, "city-name-read", "encoded bytes");
     return 0;
 }
 
 /* city-name-write: observed: work/evidence/att_frames_current.txt:52 (the app writes a GMT offset name) */
-static const uint8_t vec_15_bytes[] = {0x1f, 0x00, 0x47, 0x4d, 0x54, 0x2b, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t vec_17_bytes[] = {0x1f, 0x00, 0x47, 0x4d, 0x54, 0x2b, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-static int vec_15_decode(void)
+static int vec_17_decode(void)
 {
     wc_city_name v;
-    int rc = wc_city_name_decode(vec_15_bytes, sizeof vec_15_bytes, &v);
+    int rc = wc_city_name_decode(vec_17_bytes, sizeof vec_17_bytes, &v);
     VEC_CHECK(rc == WC_OK, "city-name-write", "decode");
     VEC_CHECK(v.unit == 0, "city-name-write", "unit");
     VEC_CHECK(strcmp(v.name, "GMT+5") == 0, "city-name-write", "name");
     return 0;
 }
 
-static int vec_15_encode(void)
+static int vec_17_encode(void)
 {
     wc_city_name v;
     memset(&v, 0, sizeof v);
@@ -682,25 +818,25 @@ static int vec_15_encode(void)
     size_t n = 0;
     int rc = wc_city_name_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "city-name-write", "encode");
-    VEC_CHECK(n == sizeof vec_15_bytes, "city-name-write", "encoded length");
-    VEC_CHECK(memcmp(out, vec_15_bytes, n) == 0, "city-name-write", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_17_bytes, "city-name-write", "encoded length");
+    VEC_CHECK(memcmp(out, vec_17_bytes, n) == 0, "city-name-write", "encoded bytes");
     return 0;
 }
 
 /* app-info-capture: observed: work/evidence/att_frames_current.txt:7 (random per-install ID, OS 2 = Android) */
-static const uint8_t vec_16_bytes[] = {0x22, 0xd5, 0xd6, 0xd0, 0x17, 0x79, 0x7e, 0x2c, 0xa5, 0x5f, 0x18, 0x02};
+static const uint8_t vec_18_bytes[] = {0x22, 0xd5, 0xd6, 0xd0, 0x17, 0x79, 0x7e, 0x2c, 0xa5, 0x5f, 0x18, 0x02};
 
-static int vec_16_decode(void)
+static int vec_18_decode(void)
 {
     wc_app_info v;
-    int rc = wc_app_info_decode(vec_16_bytes, sizeof vec_16_bytes, &v);
+    int rc = wc_app_info_decode(vec_18_bytes, sizeof vec_18_bytes, &v);
     VEC_CHECK(rc == WC_OK, "app-info-capture", "decode");
     VEC_CHECK(memcmp(v.app_id, (const uint8_t[]){0xd5, 0xd6, 0xd0, 0x17, 0x79, 0x7e, 0x2c, 0xa5, 0x5f, 0x18}, 10) == 0, "app-info-capture", "app_id");
     VEC_CHECK(v.os == 2, "app-info-capture", "os");
     return 0;
 }
 
-static int vec_16_encode(void)
+static int vec_18_encode(void)
 {
     wc_app_info v;
     memset(&v, 0, sizeof v);
@@ -710,24 +846,24 @@ static int vec_16_encode(void)
     size_t n = 0;
     int rc = wc_app_info_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "app-info-capture", "encode");
-    VEC_CHECK(n == sizeof vec_16_bytes, "app-info-capture", "encoded length");
-    VEC_CHECK(memcmp(out, vec_16_bytes, n) == 0, "app-info-capture", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_18_bytes, "app-info-capture", "encoded length");
+    VEC_CHECK(memcmp(out, vec_18_bytes, n) == 0, "app-info-capture", "encoded bytes");
     return 0;
 }
 
 /* service-discovery-start: observed: work/evidence/att_frames_current.txt:64 (the watch asks the app to start discovery) */
-static const uint8_t vec_17_bytes[] = {0x47, 0x02};
+static const uint8_t vec_19_bytes[] = {0x47, 0x02};
 
-static int vec_17_decode(void)
+static int vec_19_decode(void)
 {
     wc_service_discovery v;
-    int rc = wc_service_discovery_decode(vec_17_bytes, sizeof vec_17_bytes, &v);
+    int rc = wc_service_discovery_decode(vec_19_bytes, sizeof vec_19_bytes, &v);
     VEC_CHECK(rc == WC_OK, "service-discovery-start", "decode");
     VEC_CHECK(v.command == 2, "service-discovery-start", "command");
     return 0;
 }
 
-static int vec_17_encode(void)
+static int vec_19_encode(void)
 {
     wc_service_discovery v;
     memset(&v, 0, sizeof v);
@@ -736,24 +872,24 @@ static int vec_17_encode(void)
     size_t n = 0;
     int rc = wc_service_discovery_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "service-discovery-start", "encode");
-    VEC_CHECK(n == sizeof vec_17_bytes, "service-discovery-start", "encoded length");
-    VEC_CHECK(memcmp(out, vec_17_bytes, n) == 0, "service-discovery-start", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_19_bytes, "service-discovery-start", "encoded length");
+    VEC_CHECK(memcmp(out, vec_19_bytes, n) == 0, "service-discovery-start", "encoded bytes");
     return 0;
 }
 
 /* service-discovery-done: observed: work/evidence/att_frames_current.txt:67 */
-static const uint8_t vec_18_bytes[] = {0x47, 0x01};
+static const uint8_t vec_20_bytes[] = {0x47, 0x01};
 
-static int vec_18_decode(void)
+static int vec_20_decode(void)
 {
     wc_service_discovery v;
-    int rc = wc_service_discovery_decode(vec_18_bytes, sizeof vec_18_bytes, &v);
+    int rc = wc_service_discovery_decode(vec_20_bytes, sizeof vec_20_bytes, &v);
     VEC_CHECK(rc == WC_OK, "service-discovery-done", "decode");
     VEC_CHECK(v.command == 1, "service-discovery-done", "command");
     return 0;
 }
 
-static int vec_18_encode(void)
+static int vec_20_encode(void)
 {
     wc_service_discovery v;
     memset(&v, 0, sizeof v);
@@ -762,25 +898,25 @@ static int vec_18_encode(void)
     size_t n = 0;
     int rc = wc_service_discovery_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "service-discovery-done", "encode");
-    VEC_CHECK(n == sizeof vec_18_bytes, "service-discovery-done", "encoded length");
-    VEC_CHECK(memcmp(out, vec_18_bytes, n) == 0, "service-discovery-done", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_20_bytes, "service-discovery-done", "encoded length");
+    VEC_CHECK(memcmp(out, vec_20_bytes, n) == 0, "service-discovery-done", "encoded bytes");
     return 0;
 }
 
 /* error-class-rejected: observed: work/evidence/att_frames_current.txt:75 (0x5A rejected as unsupported) */
-static const uint8_t vec_19_bytes[] = {0xff, 0x81, 0x5a};
+static const uint8_t vec_21_bytes[] = {0xff, 0x81, 0x5a};
 
-static int vec_19_decode(void)
+static int vec_21_decode(void)
 {
     wc_error v;
-    int rc = wc_error_decode(vec_19_bytes, sizeof vec_19_bytes, &v);
+    int rc = wc_error_decode(vec_21_bytes, sizeof vec_21_bytes, &v);
     VEC_CHECK(rc == WC_OK, "error-class-rejected", "decode");
     VEC_CHECK(v.status == 129, "error-class-rejected", "status");
     VEC_CHECK(v.class_id == 90, "error-class-rejected", "class_id");
     return 0;
 }
 
-static int vec_19_encode(void)
+static int vec_21_encode(void)
 {
     wc_error v;
     memset(&v, 0, sizeof v);
@@ -790,25 +926,25 @@ static int vec_19_encode(void)
     size_t n = 0;
     int rc = wc_error_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "error-class-rejected", "encode");
-    VEC_CHECK(n == sizeof vec_19_bytes, "error-class-rejected", "encoded length");
-    VEC_CHECK(memcmp(out, vec_19_bytes, n) == 0, "error-class-rejected", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_21_bytes, "error-class-rejected", "encoded length");
+    VEC_CHECK(memcmp(out, vec_21_bytes, n) == 0, "error-class-rejected", "encoded bytes");
     return 0;
 }
 
 /* error-time-read-rejected: observed: work/MANIFEST.md (0x09 read returns ff8109 on the GBX-100) */
-static const uint8_t vec_20_bytes[] = {0xff, 0x81, 0x09};
+static const uint8_t vec_22_bytes[] = {0xff, 0x81, 0x09};
 
-static int vec_20_decode(void)
+static int vec_22_decode(void)
 {
     wc_error v;
-    int rc = wc_error_decode(vec_20_bytes, sizeof vec_20_bytes, &v);
+    int rc = wc_error_decode(vec_22_bytes, sizeof vec_22_bytes, &v);
     VEC_CHECK(rc == WC_OK, "error-time-read-rejected", "decode");
     VEC_CHECK(v.status == 129, "error-time-read-rejected", "status");
     VEC_CHECK(v.class_id == 9, "error-time-read-rejected", "class_id");
     return 0;
 }
 
-static int vec_20_encode(void)
+static int vec_22_encode(void)
 {
     wc_error v;
     memset(&v, 0, sizeof v);
@@ -818,8 +954,8 @@ static int vec_20_encode(void)
     size_t n = 0;
     int rc = wc_error_encode(&v, out, sizeof out, &n);
     VEC_CHECK(rc == WC_OK, "error-time-read-rejected", "encode");
-    VEC_CHECK(n == sizeof vec_20_bytes, "error-time-read-rejected", "encoded length");
-    VEC_CHECK(memcmp(out, vec_20_bytes, n) == 0, "error-time-read-rejected", "encoded bytes");
+    VEC_CHECK(n == sizeof vec_22_bytes, "error-time-read-rejected", "encoded length");
+    VEC_CHECK(memcmp(out, vec_22_bytes, n) == 0, "error-time-read-rejected", "encoded bytes");
     return 0;
 }
 
@@ -841,34 +977,38 @@ static const vec_entry vec_entries[] = {
     {"alarm-rest-all-off/encode", vec_05_encode},
     {"alarm-rest-one-enabled/decode", vec_06_decode},
     {"alarm-rest-one-enabled/encode", vec_06_encode},
-    {"watch-name-capture/decode", vec_07_decode},
-    {"watch-name-capture/encode", vec_07_encode},
-    {"watch-condition-capture/decode", vec_08_decode},
-    {"watch-condition-capture/encode", vec_08_encode},
-    {"program-timer-original/decode", vec_09_decode},
-    {"program-timer-original/encode", vec_09_encode},
-    {"program-timer-single/decode", vec_10_decode},
-    {"program-timer-single/encode", vec_10_encode},
-    {"dst-watch-state-capture/decode", vec_11_decode},
-    {"dst-watch-state-capture/encode", vec_11_encode},
-    {"dst-setting-ht/decode", vec_12_decode},
-    {"dst-setting-ht/encode", vec_12_encode},
-    {"dst-setting-wt/decode", vec_13_decode},
-    {"dst-setting-wt/encode", vec_13_encode},
-    {"city-name-read/decode", vec_14_decode},
-    {"city-name-read/encode", vec_14_encode},
-    {"city-name-write/decode", vec_15_decode},
-    {"city-name-write/encode", vec_15_encode},
-    {"app-info-capture/decode", vec_16_decode},
-    {"app-info-capture/encode", vec_16_encode},
-    {"service-discovery-start/decode", vec_17_decode},
-    {"service-discovery-start/encode", vec_17_encode},
-    {"service-discovery-done/decode", vec_18_decode},
-    {"service-discovery-done/encode", vec_18_encode},
-    {"error-class-rejected/decode", vec_19_decode},
-    {"error-class-rejected/encode", vec_19_encode},
-    {"error-time-read-rejected/decode", vec_20_decode},
-    {"error-time-read-rejected/encode", vec_20_encode},
+    {"alarm-first-disabled/decode", vec_07_decode},
+    {"alarm-first-disabled/encode", vec_07_encode},
+    {"watch-name-capture/decode", vec_08_decode},
+    {"watch-name-capture/encode", vec_08_encode},
+    {"alarm-rest-reset/decode", vec_09_decode},
+    {"alarm-rest-reset/encode", vec_09_encode},
+    {"watch-condition-capture/decode", vec_10_decode},
+    {"watch-condition-capture/encode", vec_10_encode},
+    {"program-timer-original/decode", vec_11_decode},
+    {"program-timer-original/encode", vec_11_encode},
+    {"program-timer-single/decode", vec_12_decode},
+    {"program-timer-single/encode", vec_12_encode},
+    {"dst-watch-state-capture/decode", vec_13_decode},
+    {"dst-watch-state-capture/encode", vec_13_encode},
+    {"dst-setting-ht/decode", vec_14_decode},
+    {"dst-setting-ht/encode", vec_14_encode},
+    {"dst-setting-wt/decode", vec_15_decode},
+    {"dst-setting-wt/encode", vec_15_encode},
+    {"city-name-read/decode", vec_16_decode},
+    {"city-name-read/encode", vec_16_encode},
+    {"city-name-write/decode", vec_17_decode},
+    {"city-name-write/encode", vec_17_encode},
+    {"app-info-capture/decode", vec_18_decode},
+    {"app-info-capture/encode", vec_18_encode},
+    {"service-discovery-start/decode", vec_19_decode},
+    {"service-discovery-start/encode", vec_19_encode},
+    {"service-discovery-done/decode", vec_20_decode},
+    {"service-discovery-done/encode", vec_20_encode},
+    {"error-class-rejected/decode", vec_21_decode},
+    {"error-class-rejected/encode", vec_21_encode},
+    {"error-time-read-rejected/decode", vec_22_decode},
+    {"error-time-read-rejected/encode", vec_22_encode},
 };
 
 static const size_t vec_entry_count = sizeof vec_entries / sizeof vec_entries[0];

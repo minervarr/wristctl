@@ -197,8 +197,7 @@
         {
           "name": "constant",
           "type": "u8",
-          "offset": 2,
-          "expected": 64
+          "offset": 2
         },
         {
           "name": "hour",
@@ -265,8 +264,7 @@
             {
               "name": "constant",
               "type": "u8",
-              "offset": 1,
-              "expected": 64
+              "offset": 1
             },
             {
               "name": "hour",

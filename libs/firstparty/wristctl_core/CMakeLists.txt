@@ -16,6 +16,7 @@ option(WRISTCTL_BUILD_TESTS "Build the Debug-only assert() test suites" ON)
 add_library(wristctl_core STATIC
     src/generated.c
     src/models.c
+    src/notify.c
     src/session.c)
 add_library(wristctl_core::wristctl_core ALIAS wristctl_core)
 
@@ -49,6 +50,10 @@ if(BUILD_TESTING AND WRISTCTL_BUILD_TESTS)
 
     wristctl_add_test(test_session
         SOURCES  tests/test_session.c
+        LIBS     wristctl_core)
+
+    wristctl_add_test(test_writes
+        SOURCES  tests/test_writes.c
         LIBS     wristctl_core)
 
     wristctl_add_test(test_cpp

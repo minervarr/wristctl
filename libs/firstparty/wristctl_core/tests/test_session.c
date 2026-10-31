@@ -45,6 +45,25 @@ static const uint8_t PROGRAM_TIMER[] = {0x2a, 0x01, 0x00, 0x25, 0x00, 0x00,
                                         0x05, 0x00, 0x00, 0x00, 0x00, 0x00,
                                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                         0x00, 0x00};
+static const uint8_t ALARM_FIRST[] = {0x15, 0x40, 0x40, 0x07, 0x1e};
+static const uint8_t ALARM_REST[] = {0x16, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40,
+                                     0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+                                     0x40, 0x00, 0x00};
+static const uint8_t ALARM_FIRST_DISABLED[] = {0x15, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t ALARM_REST_RESET[] = {0x16, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t PROGRAM_TIMER_SHORT[] = {
+    0x2a, 0x01, 0x00, 0x25, 0x00, 0x00, 0x05, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t DST_WATCH_STATE[] = {0x1d, 0x00, 0x01, 0x02, 0x02,
+                                          0xb5, 0x76, 0x00, 0x00, 0xff,
+                                          0xff, 0xff, 0xff, 0xff, 0xff};
+static const uint8_t DST_SETTING[] = {0x1e, 0x00, 0xb5, 0x76,
+                                      0xec, 0x04, 0x00};
+static const uint8_t CITY_NAME[] = {0x1f, 0x00, 0x54, 0x4f, 0x4b, 0x59, 0x4f,
+                                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 typedef struct {
     const uint8_t *data;
@@ -69,6 +88,14 @@ typedef struct {
 
     char pair_address[64];
     int pair_calls;
+    bool pair_fails;
+
+    uint64_t now_ms;
+    uint8_t stream_class; /* when set, fake_read emits this class forever */
+    int stream_reads;
+
+    size_t read_calls;
+    size_t write_count_at_read[32];
 } fake_transport;
 
 static int fake_write(void *ctx, wc_write_kind kind, const uint8_t *data,
@@ -88,6 +115,17 @@ static int fake_read(void *ctx, uint8_t *buf, size_t cap, uint32_t timeout_ms)
 {
     (void)timeout_ms;
     fake_transport *fake = ctx;
+    if (fake->read_calls < 32) {
+        fake->write_count_at_read[fake->read_calls] = fake->write_count;
+    }
+    fake->read_calls++;
+    if (fake->stream_class != 0) {
+        assert(cap >= 1);
+        buf[0] = fake->stream_class;
+        fake->stream_reads++;
+        fake->now_ms += 100;
+        return 1;
+    }
     if (fake->frame_index >= fake->frame_count) {
         return 0;
     }
@@ -105,6 +143,12 @@ static int fake_lla(void *ctx, uint8_t level)
     return fake->lla_unavailable ? -1 : 0;
 }
 
+static uint64_t fake_now_ms(void *ctx)
+{
+    fake_transport *fake = ctx;
+    return fake->now_ms;
+}
+
 static int fake_pair(void *ctx, const char *address)
 {
     fake_transport *fake = ctx;
@@ -115,7 +159,7 @@ static int fake_pair(void *ctx, const char *address)
         i++;
     }
     fake->pair_address[i] = '\0';
-    return 1;
+    return fake->pair_fails ? 0 : 1;
 }
 
 static wc_session *make_session(fake_transport *fake, const frame_ref *frames,
@@ -134,6 +178,7 @@ static wc_session *make_session(fake_transport *fake, const frame_ref *frames,
     transport.read = fake_read;
     transport.write_link_loss_alert = fake_lla;
     transport.pair = fake_pair;
+    transport.now_ms = fake_now_ms;
     transport.address = "DA:02:44:21:46:51";
     return wc_session_new(&transport, app_id, 50);
 }
@@ -199,6 +244,49 @@ static void test_service_discovery_is_parked(void)
     assert(rc == WC_SESSION_OK);
     assert(identity.pairing == WC_PAIRING_BOND_REQUESTED);
     assert(strcmp(identity.name, "CASIO GBX-100") == 0);
+    wc_session_free(session);
+}
+
+static void test_bonded_reconnect_is_not_a_command_error(void)
+{
+    static const uint8_t app_id[10] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
+    fake_transport fake;
+    memset(&fake, 0, sizeof fake);
+    frame_ref frames[] = {
+        F(NAME),       F(FEATURES),  F(BLE_SETTINGS), F(ADVERTISE),
+        F(CONNECTION), F(MODULE),    F(CONDITION),    F(VERSION),
+        F(SD_DONE),
+    };
+    wc_session *session = make_session(&fake, frames, 9, app_id);
+    assert(session != NULL);
+
+    wc_identity identity;
+    int rc = wc_session_handshake(session, &identity, true, 50);
+    assert(rc == WC_SESSION_OK);
+    assert(identity.pairing == WC_PAIRING_NOT_OBSERVED);
+    assert(fake.pair_calls == 0);
+    wc_session_free(session);
+}
+
+static void test_failed_bond_is_reported(void)
+{
+    static const uint8_t app_id[10] = {7, 7, 7, 7, 7, 7, 7, 7, 7, 7};
+    fake_transport fake;
+    memset(&fake, 0, sizeof fake);
+    fake.pair_fails = true;
+    frame_ref frames[] = {
+        F(NAME),       F(FEATURES),  F(BLE_SETTINGS), F(ADVERTISE),
+        F(CONNECTION), F(MODULE),    F(SD_START),     F(CONDITION),
+        F(VERSION),    F(SD_DONE),
+    };
+    wc_session *session = make_session(&fake, frames, 10, app_id);
+    assert(session != NULL);
+
+    wc_identity identity;
+    int rc = wc_session_handshake(session, &identity, true, 50);
+    assert(rc == WC_SESSION_OK);
+    assert(identity.pairing == WC_PAIRING_BOND_FAILED);
+    assert(fake.pair_calls == 1);
     wc_session_free(session);
 }
 
@@ -321,6 +409,156 @@ static void test_read_helpers(void)
     wc_session_free(session);
 }
 
+static void test_dst_and_city_reads(void)
+{
+    static const uint8_t app_id[10] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+    fake_transport fake;
+    memset(&fake, 0, sizeof fake);
+    frame_ref frames[] = {F(DST_WATCH_STATE), F(DST_SETTING), F(CITY_NAME)};
+    wc_session *session = make_session(&fake, frames, 3, app_id);
+    assert(session != NULL);
+
+    wc_dst_watch_state state;
+    assert(wc_session_read_dst_watch_state(session, &state) == WC_SESSION_OK);
+    assert(state.city_home == 30389);
+    assert(state.dst_auto_home);
+    assert(!state.dst_on_home);
+
+    wc_dst_setting setting;
+    assert(wc_session_read_dst_setting(session, &setting) == WC_SESSION_OK);
+    assert(setting.unit == 0);
+    assert(setting.city == 30389);
+    assert(setting.timezone == -20);
+    assert(setting.dst_diff == 4);
+
+    wc_city_name name;
+    assert(wc_session_read_city_name(session, 0, &name) == WC_SESSION_OK);
+    assert(strcmp(name.name, "TOKYO") == 0);
+    assert(fake.write_count == 3);
+    assert(fake.kinds[0] == WC_WRITE_REQUEST);
+    assert(fake.writes[0][0] == 0x1d && fake.write_lens[0] == 1);
+    assert(fake.writes[1][0] == 0x1e && fake.write_lens[1] == 1);
+    assert(fake.writes[2][0] == 0x1f && fake.writes[2][1] == 0);
+    assert(fake.write_lens[2] == 2);
+    assert(wc_session_read_city_name(session, 0, NULL) == WC_SESSION_ERR_INVALID);
+    assert(wc_session_read_dst_setting(session, NULL) == WC_SESSION_ERR_INVALID);
+    assert(wc_session_read_dst_watch_state(session, NULL) ==
+           WC_SESSION_ERR_INVALID);
+    wc_session_free(session);
+}
+
+static void test_alarm_read_sends_both_requests_first(void)
+{
+    static const uint8_t app_id[10] = {9, 9, 9, 9, 9, 9, 9, 9, 9, 9};
+    fake_transport fake;
+    memset(&fake, 0, sizeof fake);
+    frame_ref frames[] = {F(ALARM_FIRST), F(ALARM_REST)};
+    wc_session *session = make_session(&fake, frames, 2, app_id);
+    assert(session != NULL);
+
+    wc_alarm_first first;
+    wc_alarm_rest rest;
+    int rc = wc_session_read_alarms(session, &first, &rest);
+    assert(rc == WC_SESSION_OK);
+    assert(fake.write_count == 2);
+    assert(fake.read_calls >= 1);
+    assert(fake.write_count_at_read[0] == 2);
+    assert(first.enabled == 1);
+    assert(first.hour == 7);
+    assert(first.minute == 30);
+    assert(rest.alarms[0].enabled == 0);
+    wc_session_free(session);
+}
+
+static void test_reset_alarm_and_short_timer_frames(void)
+{
+    static const uint8_t app_id[10] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+    fake_transport fake;
+    memset(&fake, 0, sizeof fake);
+    frame_ref frames[] = {F(ALARM_FIRST_DISABLED), F(ALARM_REST_RESET),
+                          F(PROGRAM_TIMER_SHORT)};
+    wc_session *session = make_session(&fake, frames, 3, app_id);
+    assert(session != NULL);
+
+    wc_alarm_first first;
+    wc_alarm_rest rest;
+    int rc = wc_session_read_alarms(session, &first, &rest);
+    assert(rc == WC_SESSION_OK);
+    assert(first.enabled == 0);
+    assert(first.constant == 0);
+    assert(rest.alarms[0].enabled == 0);
+    assert(rest.alarms[0].constant == 0);
+
+    wc_program_timer timer;
+    rc = wc_session_read_program_timer(session, &timer);
+    assert(rc == WC_SESSION_OK);
+    assert(timer.repeat == 1);
+    assert(timer.workouts[0].seconds == 25);
+    assert(timer.workouts[1].seconds == 5);
+    assert(timer.workouts[5].seconds == 0);
+    wc_session_free(session);
+}
+
+static void test_unrelated_stream_does_not_reset_the_timeout(void)
+{
+    static const uint8_t app_id[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    fake_transport fake;
+    memset(&fake, 0, sizeof fake);
+    fake.stream_class = 0x28;
+    wc_session *session = make_session(&fake, NULL, 0, app_id);
+    assert(session != NULL);
+
+    wc_frame frame;
+    int rc = wc_session_wait_for(session, 0x13, &frame, 500);
+    assert(rc == WC_SESSION_ERR_TIMEOUT);
+    assert(fake.stream_reads >= 5 && fake.stream_reads <= 6);
+    wc_session_free(session);
+}
+
+static void test_time_is_written_before_service_discovery(void)
+{
+    static const uint8_t app_id[10] = {6, 6, 6, 6, 6, 6, 6, 6, 6, 6};
+    fake_transport fake;
+    memset(&fake, 0, sizeof fake);
+    frame_ref frames[] = {
+        F(NAME),       F(FEATURES), F(BLE_SETTINGS), F(ADVERTISE),
+        F(CONNECTION), F(MODULE),   F(CONDITION),    F(VERSION),
+        F(SD_START),   F(SD_DONE),
+    };
+    wc_session *session = make_session(&fake, frames, 10, app_id);
+    assert(session != NULL);
+
+    wc_current_time time;
+    memset(&time, 0, sizeof time);
+    time.year = 2026;
+    time.month = 10;
+    time.day = 27;
+    time.hour = 23;
+    time.minute = 55;
+    time.second = 13;
+    time.weekday = 2;
+    time.nano = 0x80;
+
+    wc_identity identity;
+    int rc = wc_session_handshake_with_time(session, &identity, &time, true,
+                                            50);
+    assert(rc == WC_SESSION_OK);
+    assert(identity.pairing == WC_PAIRING_BOND_REQUESTED);
+    assert(fake.pair_calls == 1);
+
+    /* Eight requests + app info + 0x09; the time write is last. */
+    assert(fake.write_count == 10);
+    assert(fake.kinds[9] == WC_WRITE_ALL);
+    assert(fake.write_lens[9] == WC_LEN_CURRENT_TIME);
+    assert(fake.writes[9][0] == 0x09);
+    assert(fake.writes[9][1] == 0xea);
+    assert(fake.writes[9][2] == 0x07);
+    assert(fake.writes[9][5] == 23);
+    assert(fake.writes[9][6] == 55);
+    assert(fake.writes[9][7] == 13);
+    wc_session_free(session);
+}
+
 static void test_invalid_arguments(void)
 {
     uint8_t app_id[10] = {0};
@@ -334,13 +572,20 @@ static void test_invalid_arguments(void)
 int main(void)
 {
     test_gbx100_handshake();
+    test_time_is_written_before_service_discovery();
     test_service_discovery_is_parked();
+    test_bonded_reconnect_is_not_a_command_error();
+    test_failed_bond_is_reported();
     test_no_service_discovery();
     test_rejection_is_reported();
     test_unknown_model_uses_link_loss_alert();
     test_missing_link_loss_alert_characteristic();
     test_timeout_on_empty_transport();
+    test_alarm_read_sends_both_requests_first();
+    test_reset_alarm_and_short_timer_frames();
+    test_unrelated_stream_does_not_reset_the_timeout();
     test_read_helpers();
+    test_dst_and_city_reads();
     test_invalid_arguments();
     return 0;
 }

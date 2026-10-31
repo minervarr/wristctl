@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Android 12+ runtime permissions. -->
+    <!-- Android 12+ runtime permissions. neverForLocation is correct here: the
+         app scans for a known watch, not for location beacons. -->
     <uses-permission
         android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-    <!-- Older releases need location for any BLE scan result. -->
+    <!-- Optional SNTP time sync in the shared native worker. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- API 26-30: legacy Bluetooth pair plus location for any BLE scan
+         result. Both are capped at 30; the modern device does not see them. -->
     <uses-permission
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
@@ -25,15 +30,38 @@
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.Material.Light">
+        android:theme="@style/WristctlTheme">
 
+        <!-- Stock NativeActivity, not a subclass: the manifest names the
+             platform class and android.app.lib_name names the library. BleLink
+             is loaded from native code through the activity's classloader;
+             WatchNotificationListener is the separate opt-in system service.
+
+             singleTask and the full configChanges list are the same defence as
+             Matrix Player's: the activity must never be destroyed and rebuilt
+             while a session is open. Rotation arrives as a resize. -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name="android.app.NativeActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|fontScale|locale|layoutDirection|touchscreen|colorMode">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="wristctl" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".WatchNotificationListener"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

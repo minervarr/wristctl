@@ -140,11 +140,9 @@ int wc_alarm_first_decode(const uint8_t *in, size_t n, wc_alarm_first *out)
     if (in[0] != 0x15) {
         return WC_ERR_CLASS;
     }
-    if (in[2] != 0x40) {
-        return WC_ERR_CONST;
-    }
     memset(out, 0, sizeof *out);
     out->flag = in[1];
+    out->constant = in[2];
     out->hour = in[3];
     out->minute = in[4];
     out->flag = in[1];
@@ -164,7 +162,7 @@ int wc_alarm_first_encode(const wc_alarm_first *v, uint8_t *out, size_t cap, siz
     }
     memset(out, 0, 5);
     out[0] = 0x15;
-    out[2] = 0x40;
+    out[2] = v->constant;
     if (v->hour > 23) {
         return WC_ERR_RANGE;
     }
@@ -200,6 +198,7 @@ int wc_alarm_rest_decode(const uint8_t *in, size_t n, wc_alarm_rest *out)
         const uint8_t *item = in + 1 + 4 * i;
         (void)item;
         out->alarms[i].flag = item[0];
+        out->alarms[i].constant = item[1];
         out->alarms[i].hour = item[2];
         out->alarms[i].minute = item[3];
         out->alarms[i].flag = item[0];
@@ -223,7 +222,7 @@ int wc_alarm_rest_encode(const wc_alarm_rest *v, uint8_t *out, size_t cap, size_
     for (size_t i = 0; i < 4; i++) {
         uint8_t *item = out + 1 + 4 * i;
         (void)item;
-        item[1] = 0x40;
+        item[1] = v->alarms[i].constant;
         if (v->alarms[i].hour > 23) {
         return WC_ERR_RANGE;
     }

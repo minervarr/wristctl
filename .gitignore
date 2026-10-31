@@ -6,11 +6,17 @@ libs/firstparty/wristctl_core/build/
 build/
 build_*/
 
+# Build tool (zipapp + caches)
+scripts/*.pyz
+scripts/.venv/
+scripts/.pytest_cache/
+
 # Android
 android/.gradle/
 android/build/
 android/app/build/
 android/app/.cxx/
+android/app/src/main/assets/
 android/local.properties
 android/.idea/
 *.iml

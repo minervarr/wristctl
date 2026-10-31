@@ -20,3 +20,13 @@ if(MSVC)
 else()
     target_compile_options(wristctl_bluez PRIVATE -Wall -Wextra)
 endif()
+
+# Headless bring-up and automation frontend. It uses the same transport and
+# session as the GUI, so a protocol path proven here is the GUI's path too.
+add_executable(wristctl_cli src/cli_main.c)
+target_link_libraries(wristctl_cli PRIVATE wristctl_bluez)
+if(MSVC)
+    target_compile_options(wristctl_cli PRIVATE /W3)
+else()
+    target_compile_options(wristctl_cli PRIVATE -Wall -Wextra)
+endif()
