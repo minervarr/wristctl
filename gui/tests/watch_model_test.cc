@@ -12,6 +12,19 @@ int main()
     assert(wristctl::gui::offset_text(-6, true) == "UTC-01:30");
     assert(wristctl::gui::offset_text(3, false) == "+00:45");
 
+    wc_alarm_first first{};
+    wc_alarm_rest rest{};
+    assert(wristctl::gui::alarm_enabled_count(first, rest) == 0);
+    first.enabled = 1;
+    assert(wristctl::gui::alarm_enabled_count(first, rest) == 1);
+    for (auto &alarm : rest.alarms) {
+        alarm.enabled = 1;
+    }
+    assert(wristctl::gui::alarm_enabled_count(first, rest) == 5);
+    first = {};
+    rest = {};
+    assert(wristctl::gui::alarm_enabled_count(first, rest) == 0);
+
     wc_program_timer timer{};
     assert(wristctl::gui::timer_round_seconds(timer) == 0);
     assert(wristctl::gui::duration_text(0) == "0:00");

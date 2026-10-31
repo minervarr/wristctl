@@ -721,105 +721,6 @@ void WatchView::drawTabs(Canvas &canvas, const Layout &layout)
     }
 }
 
-float WatchView::drawAlarmsPage(Canvas &canvas, const Layout &layout)
-{
-    const float scroll = page_scroll(route_index(route_));
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-    const float gap = 6 * d;
-    const float btn_h = touch_ ? 40 * d : 30.0f;
-    float cursor = top;
-
-    canvas.text("Alarms", x, cursor - scroll, layout.page_title_size,
-                col::text);
-    cursor += layout.page_title_size * 1.6f;
-
-    if (!snapshot_.has_alarms) {
-        cursor = drawWrapped(canvas, "not read yet; connect and press Refresh",
-                             x, cursor - scroll, layout.content_w,
-                             layout.text_size, col::dim, layout.row_line) +
-                 scroll;
-        return cursor - top;
-    }
-
-    auto time_text = [](uint8_t hour, uint8_t minute) {
-        char text[16];
-        std::snprintf(text, sizeof text, "%02u:%02u", hour, minute);
-        return std::string(text);
-    };
-
-    for (int index = 0; index < 5; index++) {
-        const bool first = index == 0;
-        const uint8_t enabled =
-            first ? edit_first_.enabled : edit_rest_.alarms[index - 1].enabled;
-        const uint8_t one_time =
-            first ? edit_first_.one_time : edit_rest_.alarms[index - 1].one_time;
-        const uint8_t chime =
-            first ? edit_first_.hourly_chime
-                  : edit_rest_.alarms[index - 1].hourly_chime;
-        const uint8_t hour =
-            first ? edit_first_.hour : edit_rest_.alarms[index - 1].hour;
-        const uint8_t minute =
-            first ? edit_first_.minute : edit_rest_.alarms[index - 1].minute;
-
-        char label[32];
-        std::snprintf(label, sizeof label, "Alarm %d", index + 1);
-        canvas.text(label, x, cursor - scroll, layout.text_size, col::text);
-        const std::string time = time_text(hour, minute);
-        canvas.text(time, x + layout.label_w, cursor - scroll,
-                    layout.text_size, enabled ? col::green : col::dim);
-        const std::string state =
-            std::string(enabled ? "on" : "off") + "  " +
-            (enabled ? (one_time ? "once" : "daily") : "   ") +
-            (first ? (chime ? "  chime" : "  silent") : "");
-        canvas.text(state, x + layout.label_w + 90 * d, cursor - scroll,
-                    layout.small_size, col::dim);
-        cursor += layout.row_line;
-
-        const int count = first ? 7 : 6;
-        const float bw =
-            (layout.content_w - gap * static_cast<float>(count - 1)) / count;
-        float bx = x;
-        auto button = [&](const std::string &text, Action action, int arg,
-                          int arg2, bool active) {
-            addButton(canvas, bx, cursor - scroll, bw, btn_h, text, action, 0,
-                      active, btn_h * 0.18f, arg, arg2);
-            bx += bw + gap;
-        };
-        button("-1h", Action::AlarmHour, index, -1, false);
-        button("+1h", Action::AlarmHour, index, 1, false);
-        button("-5m", Action::AlarmMinute, index, -5, false);
-        button("+5m", Action::AlarmMinute, index, 5, false);
-        button(enabled ? "On" : "Off", Action::AlarmToggle, index, 0, enabled);
-        button(one_time ? "Once" : "Daily", Action::AlarmMode, index, 0,
-               one_time);
-        if (first) {
-            button(chime ? "Chime" : "Silent", Action::AlarmChime, 0, 0, chime);
-        }
-        cursor += btn_h + gap;
-    }
-
-    cursor += 4 * d;
-    const float half = (layout.content_w - gap) / 2;
-    addButton(canvas, x, cursor - scroll, half, layout.action_h,
-              alarms_confirm_ ? "Tap again to write" : "Apply alarms",
-              Action::AlarmApply, 0, alarms_dirty_, layout.action_h * 0.2f);
-    addButton(canvas, x + half + gap, cursor - scroll, half, layout.action_h,
-              "Revert", Action::AlarmRevert, 0, false,
-              layout.action_h * 0.2f);
-    cursor += layout.action_h + gap;
-    cursor = drawWrapped(
-                 canvas,
-                 "Alarms are written as two frames, 0x15 and 0x16. Apply keeps "
-                 "the watch's own constant byte, so a reset alarm stays reset "
-                 "until you change it.",
-                 x, cursor - scroll, layout.content_w, layout.small_size,
-                 col::dim, layout.small_size * 1.4f) +
-             scroll;
-    return cursor - top;
-}
-
 float WatchView::drawTimerPage(Canvas &canvas, const Layout &layout)
 {
     const float scroll = page_scroll(route_index(route_));
@@ -1287,6 +1188,7 @@ void WatchView::handleClick(float x, float y)
             case Action::DemoScenario:
             case Action::SelectDevice:
             case Action::ToggleAll:
+            case Action::AlarmEdit:
             case Action::AlarmToggle:
             case Action::AlarmMode:
             case Action::AlarmChime:
@@ -1439,6 +1341,11 @@ void WatchView::handleClick(float x, float y)
                 route_ = static_cast<Route>(it->page);
                 settings_.route = route_;
                 save_settings(settings_);
+            }
+            break;
+        case Action::AlarmEdit:
+            if (it->arg >= 0 && it->arg < 5) {
+                open_detail(Detail::Alarm, it->arg);
             }
             break;
         case Action::AlarmToggle:
@@ -1859,7 +1766,8 @@ void WatchView::drawFrame()
                                               : drawTimePage(canvas, layout);
         break;
     case Route::Alarms:
-        page_height = drawAlarmsPage(canvas, layout);
+        page_height = detail_ == Detail::Alarm ? drawAlarmEditor(canvas, layout)
+                                               : drawAlarmsPage(canvas, layout);
         break;
     case Route::Timer:
         page_height = drawTimerPage(canvas, layout);

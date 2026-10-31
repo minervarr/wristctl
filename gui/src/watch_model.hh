@@ -17,6 +17,16 @@ inline std::string offset_text(int quarters, bool utc)
     return text;
 }
 
+inline unsigned alarm_enabled_count(const wc_alarm_first &first,
+                                    const wc_alarm_rest &rest) noexcept
+{
+    unsigned count = first.enabled != 0 ? 1U : 0U;
+    for (const auto &alarm : rest.alarms) {
+        count += alarm.enabled != 0 ? 1U : 0U;
+    }
+    return count;
+}
+
 inline unsigned timer_round_seconds(const wc_program_timer &timer)
 {
     unsigned total = 0;

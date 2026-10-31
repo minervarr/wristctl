@@ -68,6 +68,7 @@ private:
         TurnOnBluetooth,
         OpenLocation,
         ToggleAutoConnect,
+        AlarmEdit,
         AlarmToggle,
         AlarmMode,
         AlarmHour,
@@ -157,6 +158,7 @@ private:
     float drawTimePage(Canvas &canvas, const Layout &layout);
     float drawCityEditor(Canvas &canvas, const Layout &layout);
     float drawAlarmsPage(Canvas &canvas, const Layout &layout);
+    float drawAlarmEditor(Canvas &canvas, const Layout &layout);
     float drawTimerPage(Canvas &canvas, const Layout &layout);
     float drawNotifyPage(Canvas &canvas, const Layout &layout);
     float drawSettingsPage(Canvas &canvas, const Layout &layout);
