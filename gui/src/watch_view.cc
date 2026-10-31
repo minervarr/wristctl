@@ -721,213 +721,6 @@ void WatchView::drawTabs(Canvas &canvas, const Layout &layout)
     }
 }
 
-float WatchView::drawNotifyPage(Canvas &canvas, const Layout &layout)
-{
-    const float scroll = page_scroll(route_index(route_));
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-    const float gap = 8 * d;
-    const float half = (layout.content_w - gap) / 2;
-    float cursor = drawSectionTitle(canvas, layout, "Phone & notifications", x,
-                                    top - scroll) + scroll;
-
-    if (snapshot_.supports_scan) {
-        cursor = drawKeyValue(canvas, layout, "Notification access",
-                              snapshot_.notification_access
-                                  ? "granted"
-                                  : "not granted (connect to refresh)",
-                              x, cursor - scroll,
-                              snapshot_.notification_access ? col::green
-                                                            : col::yellow) +
-                 scroll;
-        addButton(canvas, x, cursor - scroll, half, layout.action_h,
-                  settings_.notify_forward ? "Forwarding: On" : "Forwarding: Off",
-                  Action::ToggleNotifyForward, 0, settings_.notify_forward,
-                  layout.action_h * 0.2f);
-        addButton(canvas, x + half + gap, cursor - scroll, half, layout.action_h,
-                  "Open notification access", Action::OpenNotificationAccess, 0,
-                  false, layout.action_h * 0.2f);
-        cursor += layout.action_h + gap;
-        addButton(canvas, x, cursor - scroll, half, layout.action_h,
-                  "Edit allowed apps", Action::EditField, 0, false,
-                  layout.action_h * 0.2f, EDIT_NOTIFY_PACKAGES);
-        char quiet[48] = "Quiet hours: Off";
-        if (settings_.notify_quiet_start_min >= 0 &&
-            settings_.notify_quiet_end_min >= 0) {
-            std::snprintf(quiet, sizeof quiet, "Quiet: %02d:%02d-%02d:%02d",
-                          settings_.notify_quiet_start_min / 60,
-                          settings_.notify_quiet_start_min % 60,
-                          settings_.notify_quiet_end_min / 60,
-                          settings_.notify_quiet_end_min % 60);
-        }
-        addButton(canvas, x + half + gap, cursor - scroll, half, layout.action_h,
-                  quiet, Action::NotifyQuietHours, 0, false,
-                  layout.action_h * 0.2f);
-        cursor += layout.action_h + gap;
-        cursor = drawWrapped(canvas,
-                             "Allowed packages (blank = all): " +
-                                 (notify_packages_text_.empty()
-                                      ? std::string("all")
-                                      : notify_packages_text_),
-                             x, cursor - scroll, layout.content_w,
-                             layout.small_size, col::dim,
-                             layout.small_size * 1.4f) +
-                 scroll + gap;
-        cursor = drawKeyValue(canvas, layout, "Local delivery",
-                              std::to_string(snapshot_.notifications_forwarded) +
-                                  " forwarded, " +
-                                  std::to_string(snapshot_.notifications_filtered) +
-                                  " filtered",
-                              x, cursor - scroll) +
-                 scroll + gap;
-    } else {
-        cursor = drawNote(canvas, layout,
-                          "Automatic Android notification access is unavailable "
-                          "on this desktop build. Manual test notifications "
-                          "still work.",
-                          x, cursor - scroll) +
-                 scroll + gap;
-    }
-
-    cursor = drawSectionTitle(canvas, layout, "Phone finder", x,
-                              cursor - scroll) + scroll;
-    cursor = drawNote(canvas, layout,
-                      "A high alert from the watch plays this phone's local "
-                      "alarm sound for at most 60 seconds. Alert zero or "
-                      "disconnecting stops it.",
-                      x, cursor - scroll) +
-             scroll;
-    addButton(canvas, x, cursor - scroll, layout.content_w, layout.action_h,
-              "Stop phone finder sound", Action::StopPhoneFinder, 0, false,
-              layout.action_h * 0.2f);
-    cursor += layout.action_h + gap;
-
-    cursor = drawSectionTitle(canvas, layout, "Manual test", x,
-                              cursor - scroll) + scroll;
-    static const char *const types[] = {"Other", "Call", "Mail", "SNS"};
-    auto field = [&](const char *label, const std::string &value,
-                     int edit_field) {
-        canvas.text(label, x, cursor - scroll, layout.small_size, col::dim);
-        canvas.text(truncateToWidth(canvas, value, layout.content_w - 90 * d,
-                                    layout.text_size),
-                    x + 64 * d, cursor - scroll, layout.text_size, col::text);
-        const float bw = 74 * d;
-        addButton(canvas, x + layout.content_w - bw, cursor - scroll - 4 * d,
-                  bw, touch_ ? 36 * d : 28, "Edit", Action::EditField, 0, false,
-                  (touch_ ? 36 * d : 28) * 0.18f, edit_field);
-        cursor += layout.row_line;
-    };
-
-    field("Type", types[notify_type_ & 3], -1);
-    field("App", notify_app_, EDIT_NOTIFY_APP);
-    field("Title", notify_title_, EDIT_NOTIFY_TITLE);
-    field("Text", notify_text_, EDIT_NOTIFY_TEXT);
-    cursor += 4 * d;
-    addButton(canvas, x, cursor - scroll, half, layout.action_h,
-              "Change type", Action::NotifyType, 0, false,
-              layout.action_h * 0.2f);
-    addButton(canvas, x + half + gap, cursor - scroll, half, layout.action_h,
-              "Send now", Action::NotifySend, 0, false,
-              layout.action_h * 0.2f);
-    cursor += layout.action_h + gap;
-    cursor = drawWrapped(
-                 canvas,
-                 "Forwarding is disabled by default and filtered on this "
-                 "device; notification text is never uploaded. The 0x30 packet "
-                 "has no readback, so confirm delivery on the watch. Its "
-                 "notification setting must be enabled.",
-                 x, cursor - scroll, layout.content_w, layout.small_size,
-                 col::dim, layout.small_size * 1.4f) +
-             scroll;
-    return cursor - top;
-}
-
-float WatchView::drawSettingsPage(Canvas &canvas, const Layout &layout)
-{
-    const float scroll = page_scroll(route_index(route_));
-    const float top = layout.top + layout.content_y;
-    const float x = layout.left + layout.content_x;
-    const float d = touch_ ? std::max(1.0f, display_density_) : 1.0f;
-    const float gap = 8 * d;
-    float cursor = top;
-
-    canvas.text("Settings", x, cursor - scroll, layout.page_title_size,
-                col::text);
-    cursor += layout.page_title_size * 1.6f;
-
-    if (!snapshot_.has_settings) {
-        cursor = drawWrapped(canvas, "not read yet; connect and press Refresh",
-                             x, cursor - scroll, layout.content_w,
-                             layout.text_size, col::dim, layout.row_line) +
-                 scroll;
-        return cursor - top;
-    }
-
-    const float btn_w = std::min(layout.content_w * 0.55f, 260 * d);
-    const float row_h = touch_ ? 50 * d : 38.0f;
-    auto toggle = [&](const char *label, bool on, int field) {
-        canvas.text(label, x, cursor - scroll + (row_h - layout.text_size) / 2,
-                    layout.text_size, col::text);
-        addButton(canvas, x + layout.content_w - btn_w, cursor - scroll, btn_w,
-                  touch_ ? 40 * d : 30, on ? "On" : "Off",
-                  Action::SettingToggle, 0, on, (touch_ ? 40 * d : 30) * 0.18f,
-                  field);
-        cursor += row_h;
-    };
-    auto cycle = [&](const char *label, const std::string &value, int field) {
-        canvas.text(label, x, cursor - scroll + (row_h - layout.text_size) / 2,
-                    layout.text_size, col::text);
-        addButton(canvas, x + layout.content_w - btn_w, cursor - scroll, btn_w,
-                  touch_ ? 40 * d : 30, value, Action::SettingCycle, 0, false,
-                  (touch_ ? 40 * d : 30) * 0.18f, field);
-        cursor += row_h;
-    };
-
-    static const char *const languages[] = {"English",  "Español", "Français",
-                                            "Deutsch", "Italiano", "Русский"};
-    toggle("24-hour time", edit_settings_.time_format_24h != 0, 0);
-    toggle("Button tone", edit_settings_.button_tone_off == 0, 1);
-    toggle("Auto light", edit_settings_.auto_light_off == 0, 2);
-    toggle("Power saving", edit_settings_.power_saving_off == 0, 3);
-    cycle("Light duration",
-          edit_settings_.light_duration != 0 ? "3 seconds" : "1 second", 4);
-    cycle("Date format",
-          edit_settings_.date_format_ddmm != 0 ? "DD/MM" : "MM/DD", 5);
-    cycle("Language", languages[edit_settings_.language % 6], 6);
-
-    canvas.text("Watch name", x,
-                cursor - scroll + (row_h - layout.text_size) / 2,
-                layout.text_size, col::text);
-    canvas.text(truncateToWidth(canvas, edit_name_, btn_w - 90 * d,
-                                layout.small_size),
-                x + 140 * d, cursor - scroll + (row_h - layout.small_size) / 2,
-                layout.small_size, col::dim);
-    addButton(canvas, x + layout.content_w - btn_w, cursor - scroll, btn_w,
-              touch_ ? 40 * d : 30, "Edit name", Action::EditField, 0, false,
-              (touch_ ? 40 * d : 30) * 0.18f, EDIT_WATCH_NAME);
-    cursor += row_h;
-
-    cursor += 4 * d;
-    const float half = (layout.content_w - gap) / 2;
-    addButton(canvas, x, cursor - scroll, half, layout.action_h, "Apply settings",
-              Action::SettingsApply, 0, settings_dirty_ || name_dirty_,
-              layout.action_h * 0.2f);
-    addButton(canvas, x + half + gap, cursor - scroll, half, layout.action_h,
-              "Revert", Action::SettingsRevert, 0, false,
-              layout.action_h * 0.2f);
-    cursor += layout.action_h + gap;
-    cursor = drawWrapped(
-                 canvas,
-                 "Display, sound and light flags are a read-modify-write of "
-                 "0x13: unknown bits are preserved. The name write is 0x23; "
-                 "the GBX-100 accepts 19 bytes.",
-                 x, cursor - scroll, layout.content_w, layout.small_size,
-                 col::dim, layout.small_size * 1.4f) +
-             scroll;
-    return cursor - top;
-}
-
 void WatchView::draw_editor_key(Canvas &canvas, float x, float y, float w,
                                 float h, const std::string &label, int key,
                                 Action action)
@@ -1117,6 +910,7 @@ void WatchView::handleClick(float x, float y)
             case Action::SettingCycle:
             case Action::SettingsRevert:
             case Action::EditField:
+            case Action::NotificationTest:
             case Action::NotifyType:
             case Action::EditorKey:
             case Action::EditorSpace:
@@ -1544,6 +1338,9 @@ void WatchView::handleClick(float x, float y)
         case Action::StopPhoneFinder:
             worker_.stop_phone_finder();
             break;
+        case Action::NotificationTest:
+            open_detail(Detail::NotificationTest);
+            break;
         case Action::NotifyType:
             notify_type_ = (notify_type_ + 1) & 3;
             break;
@@ -1684,7 +1481,9 @@ void WatchView::drawFrame()
             : drawTimerPage(canvas, layout);
         break;
     case Route::Phone:
-        page_height = drawNotifyPage(canvas, layout);
+        page_height = detail_ == Detail::NotificationTest
+            ? drawNotificationTest(canvas, layout)
+            : drawNotifyPage(canvas, layout);
         break;
     case Route::Settings:
         page_height = drawSettingsPage(canvas, layout);

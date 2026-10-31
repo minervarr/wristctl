@@ -98,6 +98,7 @@ private:
         SettingsApply,
         SettingsRevert,
         EditField,
+        NotificationTest,
         NotifyType,
         NotifySend,
         ToggleNotifyForward,
@@ -163,6 +164,7 @@ private:
     float drawTimerPage(Canvas &canvas, const Layout &layout);
     float drawTimerStepEditor(Canvas &canvas, const Layout &layout);
     float drawNotifyPage(Canvas &canvas, const Layout &layout);
+    float drawNotificationTest(Canvas &canvas, const Layout &layout);
     float drawSettingsPage(Canvas &canvas, const Layout &layout);
     float drawDiagnosticsPage(Canvas &canvas, const Layout &layout);
     void drawFooter(Canvas &canvas, const Layout &layout);
