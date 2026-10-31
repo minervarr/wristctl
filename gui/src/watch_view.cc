@@ -1445,6 +1445,10 @@ void WatchView::drawFrame()
     }
     canvas.clear(col::bg);
 
+    // A narrow desktop window needs the same single-column, bottom-navigation
+    // treatment as a touch host; the rail and its header chrome do not fit.
+    touch_ = host_->inputIsTouch() || canvas.w() < 640.0f;
+
     const Layout layout = make_layout(canvas);
     if (editor_open_) {
         drawEditor(canvas, layout);
